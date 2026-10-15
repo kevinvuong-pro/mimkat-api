@@ -10,6 +10,13 @@ import { Request, Response } from 'express';
 
 import { ErrorResponse } from '@/common/interfaces';
 
+const CDP_PROBE_PATHS = new Set(['/json', '/json/list', '/json/version', '/json/protocol']);
+
+function isCdpProbePath(url: string): boolean {
+  const path = url.split('?')[0];
+  return CDP_PROBE_PATHS.has(path);
+}
+
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name);
@@ -51,11 +58,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       error = exception.name;
     }
 
-    // Log error for monitoring
-    this.logger.error(
-      `${request.method} ${request.url} - ${status} - ${message}`,
-      exception instanceof Error ? exception.stack : undefined,
-    );
+    const skipLog = status === HttpStatus.NOT_FOUND && isCdpProbePath(request.url);
+
+    if (!skipLog) {
+      this.logger.error(
+        `${request.method} ${request.url} - ${status} - ${message}`,
+        exception instanceof Error ? exception.stack : undefined,
+      );
+    }
 
     const errorResponse: ErrorResponse = {
       error,
