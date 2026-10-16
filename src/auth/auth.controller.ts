@@ -50,16 +50,18 @@ export class AuthController {
 
     // Set access token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+      path: '/',
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
     });
 
     // Set refresh token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
+      path: '/',
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
     });
@@ -104,16 +106,18 @@ export class AuthController {
 
       // Set new access token in httpOnly cookie
       res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+        path: '/',
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: process.env.NODE_ENV === 'production',
         maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
       });
 
       // Set new refresh token in httpOnly cookie
       res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
+        path: '/',
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'none',
         secure: process.env.NODE_ENV === 'production',
         maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
       });
@@ -148,16 +152,18 @@ export class AuthController {
 
     // Set access token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY, result.accessToken, {
+      path: '/',
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: AUTH_CONSTANTS.ACCESS_TOKEN_EXPIRATION, // 1 hour
     });
 
     // Set refresh token in httpOnly cookie
     res.cookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY, result.refreshToken, {
+      path: '/',
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'none',
       secure: process.env.NODE_ENV === 'production',
       maxAge: AUTH_CONSTANTS.REFRESH_TOKEN_EXPIRATION, // 7 days
     });
