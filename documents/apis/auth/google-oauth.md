@@ -13,7 +13,7 @@ API xác thực người dùng thông qua Google OAuth 2.0. Cho phép người d
 - Tự động verify email (Google accounts đã được verified)
 - Hỗ trợ link Google account vào tài khoản email/password hiện có
 - Session management với device tracking
-- HttpOnly cookies với SameSite=Lax
+- Frontend lưu token trong localStorage và gửi Bearer token
 - Maximum 10 concurrent sessions per user
 - Session tối đa 30 ngày kể từ lúc tạo
 
@@ -82,7 +82,7 @@ Endpoint này sẽ redirect người dùng đến Google OAuth consent screen. K
 
 ### 2. Google OAuth Callback (Xử lý callback từ Google)
 
-Xử lý callback từ Google sau khi user cấp quyền. Tự động tạo/link account, set cookies và redirect về frontend với tokens.
+Xử lý callback từ Google sau khi user cấp quyền. Tự động tạo/link account, redirect về frontend với tokens trong URL fragment.
 
 **Endpoint**: `GET /auth/google/callback`
 
@@ -124,7 +124,7 @@ Xử lý callback từ Google sau khi user cấp quyền. Tự động tạo/lin
    - Update session với hashed refresh token
    - Return tokens object: `{ accessToken: string, refreshToken: string }`
 6. AuthController.googleAuthCallback() receives tokens from service
-7. Set HttpOnly cookies với accessToken và refreshToken (tokens từ service)
+7. Tạo URL fragment chứa accessToken và refreshToken để frontend lưu localStorage
 8. Lấy redirect URL từ `state` parameter trong query (đã được Google trả lại từ bước trước)
 9. Redirect (302) về frontend URL từ `state` parameter
 
@@ -136,8 +136,7 @@ Xử lý callback từ Google sau khi user cấp quyền. Tự động tạo/lin
 
 Backend sẽ:
 
-1. Set HttpOnly cookies với accessToken và refreshToken
-2. Redirect về frontend URL từ `state` parameter (URL mà client đã gửi khi gọi `/auth/google?redirect_url=...`)
+1. Redirect về frontend URL từ `state` parameter với accessToken và refreshToken trong URL fragment
 
 **Ví dụ Redirect**:
 
@@ -146,24 +145,9 @@ Backend sẽ:
 
 **Note về Tokens**:
 
-- Tokens được lưu trữ an toàn trong HttpOnly cookies, không cần truyền qua URL
+- Frontend đọc fragment và lưu tokens vào localStorage
 - Nếu không có `redirect_url` trong request ban đầu, backend sẽ tự động extract từ request headers
-- Mặc dù tokens không hiển thị trong URL redirect, backend vẫn internally generate và return tokens (tương tự login endpoint) trước khi set cookies
-
-**Response Headers (Set-Cookie)**:
-
-```
-Set-Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=3600; Path=/
-Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
-```
-
-**Cookie Configuration**:
-
-- `HttpOnly`: true (không thể access bằng JavaScript)
-- `Secure`: true trong production (NODE_ENV=production)
-- `SameSite`: lax (CSRF protection)
-- `MaxAge`: 3600s (1 hour) cho accessToken, 604800s (7 days) cho refreshToken; session vẫn bị giới hạn tuyệt đối 30 ngày ở backend
-- `Path`: / (available cho tất cả routes)
+- Backend không set cookie xác thực; token expiry và session limits vẫn được kiểm soát ở API
 
 **Error Responses**
 
@@ -220,8 +204,7 @@ Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secu
    ```
 3. Generate JWT access token (1h) và refresh token (7d, sliding)
 4. Create session với device info
-5. Set HttpOnly cookies
-6. Redirect to frontend
+5. Redirect về frontend với tokens trong URL fragment
 
 **Kết quả**: User mới được tạo và có thể login bằng Google
 
@@ -243,7 +226,7 @@ Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secu
    ```
 3. Generate JWT tokens
 4. Create session
-5. Set cookies và redirect to frontend
+5. Redirect với tokens trong URL fragment về frontend
 
 **Kết quả**: User có thể login bằng CẢ email/password VÀ Google
 
@@ -264,7 +247,7 @@ Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secu
 2. Check `isActive = true`
 3. Generate JWT tokens
 4. Create session
-5. Set cookies và redirect to frontend
+5. Redirect với tokens trong URL fragment về frontend
 
 **Kết quả**: User login thành công như bình thường
 
@@ -336,7 +319,7 @@ does not match the ones authorized for the OAuth client.
 **Result**:
 
 - User bị redirect về một error page hoặc không redirect về app
-- Cookies không được set
+- Frontend không lưu được tokens từ URL fragment
 
 **Solution**:
 
@@ -414,8 +397,7 @@ does not match the ones authorized for the OAuth client.
 - [ ] NODE_ENV được set (development/production)
 - [ ] JWT secrets được configure
 - [ ] Database connection working
-- [ ] Frontend có thể đọc HttpOnly cookies để xác định trạng thái đăng nhập
-- [ ] Browser cookies enabled
+- [ ] Frontend có thể đọc URL fragment và lưu tokens vào localStorage
 - [ ] No ad blockers blocking OAuth flow
 - [ ] Network connection stable
 

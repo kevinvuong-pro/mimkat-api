@@ -244,7 +244,7 @@ export class AuthService {
     };
   }
 
-  async logout(userId: string, refreshToken: string) {
+  async logout(userId: string, refreshToken?: string) {
     if (!refreshToken) throw new BadRequestException('Refresh token not provided');
 
     const matchingSession = await this.findSessionByRefreshToken(refreshToken);
@@ -257,7 +257,7 @@ export class AuthService {
     await this.prisma.session.delete({ where: { id: matchingSession.id } });
   }
 
-  async refreshTokens(refreshToken: string, deviceInfo?: DeviceInfo) {
+  async refreshTokens(refreshToken?: string, deviceInfo?: DeviceInfo) {
     if (!refreshToken) throw new BadRequestException('Refresh token not provided');
 
     const now = new Date();

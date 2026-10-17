@@ -2,14 +2,13 @@
 
 ## Overview
 
-API xác thực người dùng, hỗ trợ cả Bearer tokens và HttpOnly cookies.
+API xác thực người dùng sử dụng Bearer tokens.
 
 **Base URL**: `/auth`
 
-**Authentication Methods**:
+**Authentication Method**:
 
-- Web Applications: HttpOnly Cookies (tự động, secure hơn)
-- Mobile/API Clients: Bearer Token trong Authorization header
+- Frontend và mobile/API clients lưu token ở phía client và gửi qua `Authorization: Bearer {accessToken}`.
 
 **Security Features**:
 
@@ -18,7 +17,7 @@ API xác thực người dùng, hỗ trợ cả Bearer tokens và HttpOnly cooki
 - Token rotation on refresh
 - Session management với device tracking
 - Rate limiting
-- HttpOnly cookies với SameSite=Lax
+- Token rotation khi refresh
 - Maximum 10 concurrent sessions per user
 - Session bị giới hạn tuyệt đối trong 30 ngày kể từ lúc tạo
 
@@ -148,7 +147,7 @@ curl -X POST http://localhost:3000/auth/register \
 
 ### 2. Login (Đăng nhập)
 
-Đăng nhập vào hệ thống với email và password. Tự động set cookies và trả về tokens trong response body.
+Đăng nhập vào hệ thống với email và password. API trả về cặp token trong response body.
 
 **Endpoint**: `POST /auth/login`
 
@@ -188,14 +187,7 @@ curl -X POST http://localhost:3000/auth/register \
 }
 ```
 
-**Note về Response Body**: Mặc dù tokens được set trong HttpOnly cookies (an toàn cho web apps), chúng cũng được trả về trong response body để hỗ trợ mobile/API clients có thể lưu vào storage (localStorage, AsyncStorage, etc.)
-
-**Response Headers (Set-Cookie)**:
-
-```
-Set-Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=3600; Path=/
-Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
-```
+**Lưu token**: Frontend lưu `accessToken` và `refreshToken` trong `localStorage`.
 
 | Field        | Type   | Description                                                           |
 | ------------ | ------ | --------------------------------------------------------------------- |
@@ -308,24 +300,10 @@ curl -X POST http://localhost:3000/auth/login \
   }'
 ```
 
-**With cookies (save cookies):**
-
-```bash
-curl -X POST http://localhost:3000/auth/login \
-  -H "Content-Type: application/json" \
-  -c cookies.txt \
-  -d '{
-    "email": "user@example.com",
-    "password": "SecurePass123"
-  }'
-```
-
 #### Notes
 
-- **Dual Authentication Support**: Response tokens + HttpOnly cookies
-- **Web Apps**: Sử dụng cookies (secure hơn, tự động gửi)
-- **Mobile/APIs**: Sử dụng Authorization header với tokens từ response body
-- **Secure Cookie**: Chỉ được bật trong production mode (NODE_ENV=production)
+- **Authentication**: Gửi `Authorization: Bearer {accessToken}` cho các endpoint cần đăng nhập.
+- **Refresh**: Gửi `refreshToken` trong request body tới `POST /auth/refresh`.
 - Hệ thống tự động thu thập thông tin thiết bị từ request headers
 - Mỗi người dùng có giới hạn **10 phiên đăng nhập đồng thời** (MAX_CONCURRENT_SESSIONS)
 - Khi vượt quá giới hạn, phiên cũ nhất (theo lastUsedAt) sẽ tự động bị đăng xuất
@@ -337,11 +315,11 @@ curl -X POST http://localhost:3000/auth/login \
 
 ### 3. Logout (Đăng xuất)
 
-Đăng xuất khỏi thiết bị hiện tại, xóa session và clear cookies.
+Đăng xuất khỏi thiết bị hiện tại và xóa session.
 
 **Endpoint**: `POST /auth/logout`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (Bearer Token)
 
 #### Headers (Option 1)
 
@@ -359,7 +337,7 @@ Authorization: Bearer {accessToken}
 
 | Field        | Type   | Required | Description                                 |
 | ------------ | ------ | -------- | ------------------------------------------- |
-| refreshToken | string | No       | Refresh token (optional nếu sử dụng cookie) |
+| refreshToken | string | Yes      | Refresh token đang lưu ở client |
 
 #### Response
 
@@ -374,13 +352,6 @@ Authorization: Bearer {accessToken}
   "timestamp": "2025-11-12T10:00:00.000Z",
   "path": "/auth/logout"
 }
-```
-
-**Response Headers (Clear cookies)**:
-
-```
-Set-Cookie: accessToken=; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/
-Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/
 ```
 
 **Error Responses**
@@ -437,30 +408,20 @@ curl -X POST http://localhost:3000/auth/logout \
   }'
 ```
 
-**Using cookies:**
-
-```bash
-curl -X POST http://localhost:3000/auth/logout \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -c cookies.txt
-```
-
 #### Notes
 
-- **Cookie Method**: Refresh token tự động lấy từ cookie nếu không có trong body
 - **Token Method**: Cần truyền refresh token trong body
 - **Token Verification**: Sử dụng bcrypt.compare() để so sánh refresh token với hash trong database
 - Chỉ xóa phiên đăng nhập của thiết bị hiện tại (dựa vào refresh token)
 - Các thiết bị khác vẫn giữ phiên đăng nhập
-- Cookies tự động được clear (cả accessToken và refreshToken)
+- Frontend xóa token khỏi localStorage sau khi logout thành công
 - Session record được xóa khỏi database
 
 ---
 
 ### 4. Refresh Token (Làm mới token)
 
-Sử dụng refresh token để lấy cặp access token và refresh token mới. Hỗ trợ lấy refresh token từ cookie hoặc request body.
+Sử dụng refresh token trong request body để lấy cặp access token và refresh token mới.
 
 **Endpoint**: `POST /auth/refresh`
 
@@ -476,7 +437,7 @@ Sử dụng refresh token để lấy cặp access token và refresh token mới
 
 | Field        | Type   | Required | Description                                 |
 | ------------ | ------ | -------- | ------------------------------------------- |
-| refreshToken | string | No       | Refresh token (optional nếu sử dụng cookie) |
+| refreshToken | string | Yes      | Refresh token đang lưu ở client |
 
 #### Response
 
@@ -496,14 +457,7 @@ Sử dụng refresh token để lấy cặp access token và refresh token mới
 }
 ```
 
-**Note về Response Body**: Tương tự login endpoint, tokens được trả về trong cả cookies (web) và response body (mobile/API).
-
-**Response Headers (Set new cookies)**:
-
-```
-Set-Cookie: accessToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=3600; Path=/
-Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secure; SameSite=Lax; Max-Age=604800; Path=/
-```
+Tokens mới được trả về trong response body; frontend phải ghi đè cả hai token trong localStorage.
 
 | Field        | Type   | Description                                    |
 | ------------ | ------ | ---------------------------------------------- |
@@ -564,13 +518,6 @@ Set-Cookie: refreshToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...; HttpOnly; Secu
 }
 ```
 
-**Response Headers (Clear cookies khi có lỗi)**:
-
-```
-Set-Cookie: accessToken=; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/
-Set-Cookie: refreshToken=; HttpOnly; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/
-```
-
 #### cURL Examples
 
 **Using request body:**
@@ -583,27 +530,17 @@ curl -X POST http://localhost:3000/auth/refresh \
   }'
 ```
 
-**Using cookies:**
-
-```bash
-curl -X POST http://localhost:3000/auth/refresh \
-  -H "Content-Type: application/json" \
-  -b cookies.txt \
-  -c cookies.txt
-```
-
 #### Notes
 
-- **Hybrid Support**: Lấy refresh token từ cookie trước, fallback sang body
+- **Token Input**: Lấy refresh token từ request body
 - **Token Rotation**: Mỗi lần refresh, token cũ sẽ được update với token mới (session giữ nguyên ID)
 - **Token Hashing**: Refresh token mới được hash bằng bcrypt (salt rounds = 10) trước khi lưu vào database
 - **Session Preservation**: Session ID được giữ nguyên khi refresh, chỉ update `refreshToken` (hash), `lastUsedAt`, và `expiresAt` theo sliding 7 ngày
 - **Absolute Session Expiry**: Dù refresh liên tục, session vẫn bị chặn sau 30 ngày kể từ lúc tạo
-- **Cookie Update**: Tự động set cookies mới cho web clients
-- **Response Tokens**: Vẫn trả về tokens trong response body cho mobile/API clients
+- **Response Tokens**: Trả về tokens mới trong response body để frontend cập nhật localStorage
 - **Device Info Update**: Thông tin thiết bị được cập nhật nếu có deviceInfo mới trong request
 - **Token Validation**: Verify JWT trước, sau đó dùng bcrypt.compare() để tìm session trong database
-- **Error Handling**: Khi có lỗi (invalid/expired token), cookies sẽ được tự động clear trong try-catch block của controller. Sau đó exception được re-throw để HttpExceptionFilter xử lý response
+- **Error Handling**: Khi có lỗi (invalid/expired token), frontend xóa tokens local và yêu cầu đăng nhập lại
 - **Expired Session Cleanup**: Session hết hạn được tự động xóa khỏi database
 - **JWT First**: Verify JWT signature trước, sau đó mới compare hash trong database
 - AccessToken mới: 1 giờ, RefreshToken mới: 7 ngày, Session tối đa: 30 ngày
@@ -617,7 +554,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 - **Thuật toán**: HS256 (HMAC with SHA-256)
 - **Thời gian sống**: 1 giờ
-- **Cookie Name**: `accessToken`
+- **Client Storage Key**: `accessToken` trong localStorage
 - **Secret**: `JWT_SECRET` (environment variable)
 - **Payload**:
   ```json
@@ -633,7 +570,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 - **Thuật toán**: HS256 (HMAC with SHA-256)
 - **Thời gian sống**: 7 ngày (sliding window, được cấp lại khi refresh)
-- **Cookie Name**: `refreshToken`
+- **Client Storage Key**: `refreshToken` trong localStorage
 - **Secret**: `JWT_REFRESH_SECRET` (environment variable)
 - **Lưu trữ**: Database (bảng Session)
 - **Token Rotation**: Được áp dụng khi refresh
@@ -656,7 +593,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 **Refresh Token Validation Flow**:
 
-1. **Input Source**: Lấy refresh token từ cookie hoặc request body (cookie được ưu tiên)
+1. **Input Source**: Lấy refresh token từ request body
 2. **JWT Verification**: Verify JWT signature với `JWT_REFRESH_SECRET` và lấy userId từ payload
 3. **Database Lookup**: Tìm tất cả sessions của user trong database
 4. **Hash Comparison**: Sử dụng bcrypt.compare() để so sánh refresh token với các hash trong database
@@ -664,9 +601,9 @@ curl -X POST http://localhost:3000/auth/refresh \
 6. **Token Generation**: Tạo cặp access/refresh token mới với cùng `sessionId`
 7. **Hash New Token**: Hash refresh token mới bằng bcrypt (salt rounds = 10)
 8. **Session Update**: Cập nhật session với refresh token hash mới và thông tin device
-9. **Cookie Setting**: Set cookies mới cho client (web browsers)
-10. **Response**: Trả về tokens trong response body (mobile/API clients)
-11. **Error Cleanup**: Nếu có lỗi, tự động clear cookies và xóa invalid sessions
+9. **Response**: Trả về tokens mới trong response body
+10. **Client Update**: Frontend ghi đè tokens trong localStorage
+11. **Error Cleanup**: Frontend xóa tokens local và xóa session không hợp lệ nếu cần
 
 ---
 
@@ -699,18 +636,9 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 ### CORS Configuration
 
-- **Credentials**: `true` (cho phép cookies cross-origin)
 - **Origins**: Cấu hình qua `CORS_ORIGIN` environment variable (phải match chính xác)
 - **Allowed Headers**: `Content-Type`, `Authorization`, `X-Client-Type`
 - **Methods**: `GET`, `POST`, `PUT`, `PATCH`, `DELETE`, `OPTIONS`
-
-### Cookie Configuration
-
-- **HttpOnly**: `true` (không thể truy cập qua JavaScript)
-- **Secure**: `true` trong production (chỉ gửi qua HTTPS)
-- **SameSite**: `lax` (bảo vệ CSRF)
-- **Path**: `/` (available cho tất cả routes)
-- **Domain**: Không set (default to current domain)
 
 ### Session Management
 
@@ -732,10 +660,9 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 ### JWT Strategy
 
-- **Token Sources**: Authorization header (`Bearer {token}`) OR cookies (`accessToken`)
-- **Priority**: Header token được ưu tiên trước, fallback về cookie
+- **Token Source**: Authorization header (`Bearer {token}`)
 - **Validation Steps**:
-  1. Extract token từ header hoặc cookie
+  1. Extract token từ Authorization header
   2. Verify JWT signature với `JWT_SECRET`
   3. Check token expiration
   4. Validate payload structure (must have `sub` field)
@@ -796,10 +723,3 @@ curl -X POST http://localhost:3000/auth/refresh \
 - Wait 15 minutes before retrying
 - Register: 5 attempts limit
 - Login: 10 attempts limit
-
-### Cookies not being set
-
-- Check `CORS_ORIGIN` matches frontend URL exactly
-- Ensure `credentials: 'include'` in fetch/axios
-- Verify `NODE_ENV=production` for secure cookies in production
-- Check SameSite policy compatibility with your setup

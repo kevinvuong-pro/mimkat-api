@@ -1,10 +1,9 @@
+import type { Request } from 'express';
 import { Throttle } from '@nestjs/throttler';
-import type { Response, Request } from 'express';
-import { Get, Res, Req, Post, Body, Query, HttpCode, Controller, HttpStatus } from '@nestjs/common';
+import { Get, Req, Post, Body, Query, HttpCode, Controller, HttpStatus } from '@nestjs/common';
 
 import { Public } from '@/common/decorators';
 import { extractFrontendUrl } from '@/common/utils';
-import { AUTH_CONSTANTS } from '@/auth/constants/auth.constants';
 import { ResetPasswordDto } from '@/verification/dto/reset-password.dto';
 import { VerificationService } from '@/verification/verification.service';
 import { ForgotPasswordDto } from '@/verification/dto/forgot-password.dto';
@@ -52,13 +51,9 @@ export class VerificationController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 3600000 } }) // 10 requests per 1 hour
   async resetPassword(
-    @Res({ passthrough: true }) res: Response,
     @Body() resetPasswordDto: ResetPasswordDto,
   ) {
     await this.verificationService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
 
-    // Clear authentication cookies to force re-login after password reset
-    res.clearCookie(AUTH_CONSTANTS.ACCESS_TOKEN_KEY);
-    res.clearCookie(AUTH_CONSTANTS.REFRESH_TOKEN_KEY);
   }
 }
