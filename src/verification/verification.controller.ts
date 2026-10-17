@@ -50,10 +50,7 @@ export class VerificationController {
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 3600000 } }) // 10 requests per 1 hour
-  async resetPassword(
-    @Body() resetPasswordDto: ResetPasswordDto,
-  ) {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     await this.verificationService.resetPassword(resetPasswordDto.token, resetPasswordDto.password);
-
   }
 }

@@ -39,10 +39,7 @@ export class AuthController {
   @Post('login')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 900000 } }) // 10 requests per 15 minutes
-  async login(
-    @Req() req: Request,
-    @Body() loginDto: LoginDto,
-  ) {
+  async login(@Req() req: Request, @Body() loginDto: LoginDto) {
     const deviceInfo = DeviceUtil.extractDeviceInfo(req);
 
     return this.authService.login(loginDto, deviceInfo);
@@ -51,10 +48,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
-  async logout(
-    @CurrentUser() user: UserPayload,
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ) {
+  async logout(@CurrentUser() user: UserPayload, @Body() refreshTokenDto: RefreshTokenDto) {
     const refreshToken = refreshTokenDto.refreshToken;
 
     await this.authService.logout(user.id, refreshToken);
@@ -63,10 +57,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  async refreshTokens(
-    @Req() req: Request,
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ) {
+  async refreshTokens(@Req() req: Request, @Body() refreshTokenDto: RefreshTokenDto) {
     const deviceInfo = DeviceUtil.extractDeviceInfo(req);
 
     return this.authService.refreshTokens(refreshTokenDto.refreshToken, deviceInfo);

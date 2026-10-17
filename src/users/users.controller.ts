@@ -79,7 +79,6 @@ export class UsersController {
       changePasswordDto.currentPassword,
       changePasswordDto.newPassword,
     );
-
   }
 
   @Get('sessions')
@@ -106,9 +105,7 @@ export class UsersController {
 
   @Delete('sessions')
   @HttpCode(HttpStatus.OK)
-  async logoutAllDevices(
-    @CurrentUser() user: UserPayload,
-  ) {
+  async logoutAllDevices(@CurrentUser() user: UserPayload) {
     await this.usersService.logoutAllDevices(user.id);
   }
 
