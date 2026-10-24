@@ -208,6 +208,7 @@ export class UsersService {
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
       lastUsedAt: session.lastUsedAt,
+      location: session.location || 'Unknown',
       ipAddress: session.ipAddress || 'Unknown',
       deviceName: session.deviceName || 'Unknown',
       deviceType: session.deviceType || 'Unknown',

@@ -62,6 +62,7 @@ export class AuthService {
         refreshToken: '', // Will be updated after token generation
         absoluteExpiresAt,
         lastUsedAt: new Date(),
+        location: deviceInfo?.location,
         ipAddress: deviceInfo?.ipAddress,
         userAgent: deviceInfo?.userAgent,
         deviceName: deviceInfo?.deviceName,
@@ -295,6 +296,7 @@ export class AuthService {
         // Update device info if provided
         ...(deviceInfo && {
           ipAddress: deviceInfo.ipAddress,
+          location: deviceInfo.location,
           userAgent: deviceInfo.userAgent,
           deviceName: deviceInfo.deviceName,
           deviceType: deviceInfo.deviceType,
@@ -326,7 +328,7 @@ export class AuthService {
           isEmailVerified: true, // Google login implies email is verified
           googleId: googleUser.googleId,
           avatar: user.avatar || googleUser.avatar,
-          fullName: user.fullName || `${googleUser.firstName} ${googleUser.lastName}`,
+          fullName: user.fullName || `${googleUser.firstName || ''} ${googleUser.lastName || ''}`,
         },
       });
     }

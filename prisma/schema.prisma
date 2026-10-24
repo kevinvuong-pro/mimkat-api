@@ -55,6 +55,7 @@ model Session {
   // Device Information
   deviceName String?
   deviceType String?
+  location   String?
   ipAddress  String?
   userAgent  String?
 

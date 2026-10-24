@@ -87,6 +87,7 @@ Cookie: accessToken=<token>
 | items[].deviceName        | string  | Tên thiết bị (browser + OS)            |
 | items[].deviceType        | string  | Loại thiết bị: Desktop, Mobile, Tablet |
 | items[].ipAddress         | string  | Địa chỉ IP của thiết bị                |
+| items[].location          | string  | Vị trí gần đúng từ IP (thành phố, vùng, quốc gia) |
 | items[].createdAt         | string  | Thời điểm tạo session (ISO 8601)       |
 | items[].lastUsedAt        | string  | Lần cuối sử dụng (ISO 8601)            |
 | items[].expiresAt         | string  | Thời điểm hết hạn (ISO 8601)           |

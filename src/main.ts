@@ -24,8 +24,15 @@ async function bootstrap() {
 
   // Enable CORS for Bearer token requests.
   app.enableCors({
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Client-Type',
+      'X-Device-Model',
+      'X-Device-Mobile',
+      'X-Device-Platform',
+    ],
     methods: ['GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Client-Type'],
     origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(', ').filter(Boolean) : '*',
   });
 
