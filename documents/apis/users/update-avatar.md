@@ -287,7 +287,7 @@ Avatars được lưu trên AWS S3 (hoặc S3-compatible storage):
 **Storage key format:**
 
 ```
-general/avatars/{userId}.webp
+general/avatars/{userId}-{uuid}.webp
 ```
 
 **Lưu ý quan trọng:**
@@ -295,10 +295,11 @@ general/avatars/{userId}.webp
 - Tất cả avatars đều được lưu với extension `.webp`
 - Tất cả ảnh (JPG, PNG, WebP, GIF) đều được convert sang WebP
 - GIF animated cũng thành WebP animated, không còn file `.gif`
+- Mỗi lần upload dùng một UUID mới để tránh hai request đồng thời ghi đè hoặc xóa nhầm file của nhau
 
 **Example:**
 
-- `general/avatars/123e4567-e89b-12d3-a456-426614174000.webp`
+- `general/avatars/user-123e4567-e89b-12d3-a456-426614174000.webp`
 
 ### Old Avatar Cleanup
 
@@ -306,17 +307,17 @@ Khi upload avatar mới:
 
 1. Process và upload ảnh mới
 2. Update database với avatar key mới
-3. **Overwite old avatar** (fire-and-forget, không chặn response)
+3. Xóa avatar cũ sau khi database cập nhật thành công (nếu avatar cũ là storage key)
 
 **Benefits:**
 
 - Giảm storage cost
 - Không có orphaned files
-- Non-blocking (không làm chậm response)
+- Nếu database update thất bại do request khác đã cập nhật avatar, file mới của request hiện tại sẽ được xóa và API trả `409 Conflict`
 
 ## Race Condition Handling
 
-API sử dụng **optimistic locking** để prevent race conditions:
+API sử dụng **optimistic locking** kết hợp với storage key riêng cho từng request để prevent race conditions:
 
 ### Scenario
 
@@ -336,9 +337,7 @@ await prisma.user.updateMany({
     id: userId,
     avatar: oldAvatar, // Only update if avatar unchanged
   },
-  data: {
-    avatar: newAvatar,
-  },
+  data: { avatar: newAvatar },
 });
 
 // Check if update successful
@@ -354,7 +353,7 @@ if (updatedCount === 0) {
 
 - **First request**: Succeeds, avatar updated
 - **Second request**: Fails với 409 Conflict
-- **Cleanup**: Second request's uploaded file được tự động xóa
+- **Cleanup**: Request thất bại chỉ xóa file UUID do chính request đó upload; không xóa file của request thành công
 
 ### Client Handling
 

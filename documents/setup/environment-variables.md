@@ -293,9 +293,10 @@ CORS_ORIGIN="http://localhost:3001, http://localhost:3002"
 
 **Lưu ý:**
 
-- Các domain cách nhau bởi dấu phẩy và khoảng trắng
+- Các domain cách nhau bởi dấu phẩy; có hoặc không có khoảng trắng đều được hỗ trợ
 - Không có dấu `/` ở cuối URL
 - Có thể thêm nhiều domain
+- Các origin này cũng là allowlist cho `redirect_url` của Google OAuth; chỉ redirect về các origin đã khai báo
 
 **Ví dụ:**
 

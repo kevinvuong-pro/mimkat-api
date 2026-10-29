@@ -32,8 +32,12 @@ async function bootstrap() {
       'X-Device-Mobile',
       'X-Device-Platform',
     ],
+    origin: process.env.CORS_ORIGIN
+      ? process.env.CORS_ORIGIN.split(',')
+          .map((origin) => origin.trim())
+          .filter(Boolean)
+      : '*',
     methods: ['GET', 'PUT', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(', ').filter(Boolean) : '*',
   });
 
   // Global validation pipe với whitelist để tránh mass assignment

@@ -39,17 +39,21 @@ GET /auth/google?redirect_url={frontend_url}
 
 **Query Parameters**:
 
-| Parameter    | Type   | Required | Description                                                                                                                                              |
-| ------------ | ------ | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| redirect_url | string | No       | URL frontend để redirect về sau khi login thành công. Nếu không có, sẽ tự động extract từ request headers. Phải được encode bằng `encodeURIComponent()`. |
+| Parameter    | Type   | Required | Description                                                                                                                                                                                                                                           |
+| ------------ | ------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| redirect_url | string | No       | Origin hoặc URL frontend để redirect về sau khi login thành công. URL phải thuộc một origin được khai báo trong `CORS_ORIGIN`; nếu không có, backend sẽ dùng origin frontend hợp lệ từ request headers. Phải được encode bằng `encodeURIComponent()`. |
 
 **Ví dụ**:
 
 ```bash
 GET /auth/google?redirect_url=http%3A%2F%2Flocalhost%3A3000
 # hoặc
-GET /auth/google?redirect_url=https%3A%2F%2Fexample.com%2Fdashboard
+GET /auth/google?redirect_url=http%3A%2F%2Flocalhost%3A3002%2Fauth%2Fcallback
 ```
+
+> **Security:** `redirect_url` không được trỏ tới domain tùy ý. Backend kiểm tra origin
+> với `CORS_ORIGIN` trước khi khởi tạo OAuth và một lần nữa tại callback. Nếu không hợp lệ,
+> request bị từ chối với `400 Invalid OAuth redirect URL`.
 
 #### Response
 
@@ -61,6 +65,7 @@ Endpoint này sẽ redirect người dùng đến Google OAuth consent screen. K
 2. GoogleAuthGuard (Passport strategy) xử lý request:
    - Lấy `redirect_url` từ query parameter (nếu có)
    - Nếu không có, tự động extract từ request headers (sử dụng `extractFrontendUrl()`)
+   - Kiểm tra URL thuộc allowlist `CORS_ORIGIN`
    - Đưa redirect URL vào `state` parameter để Google trả lại sau
 3. Backend redirect đến `https://accounts.google.com/o/oauth2/v2/auth` với các parameters:
    - `client_id`: Google OAuth Client ID (từ env GOOGLE_CLIENT_ID)
@@ -77,6 +82,7 @@ Endpoint này sẽ redirect người dùng đến Google OAuth consent screen. K
 - Sử dụng Passport Google OAuth 2.0 Strategy
 - Strategy name: `'google'`
 - Scope được request: `['email', 'profile']`
+- Profile Google có thể thiếu ảnh hoặc tên; backend xử lý các trường này như optional.
 
 ---
 
@@ -227,6 +233,10 @@ Backend sẽ:
 3. Generate JWT tokens
 4. Create session
 5. Redirect với tokens trong URL fragment về frontend
+
+> Callback chỉ redirect về origin đã được allowlist. Access token và refresh token được
+> đặt trong URL fragment để server đích không nhận chúng trong HTTP request; frontend callback
+> sẽ đọc fragment, lưu token local và chuyển hướng vào ứng dụng.
 
 **Kết quả**: User có thể login bằng CẢ email/password VÀ Google
 

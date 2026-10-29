@@ -8,6 +8,7 @@ import {
   UseGuards,
   Controller,
   HttpStatus,
+  BadRequestException,
 } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
@@ -17,7 +18,7 @@ import { AuthService } from '@/auth/auth.service';
 import { RegisterDto } from '@/auth/dto/register.dto';
 import { JwtAuthGuard } from '@/auth/guards/jwt-auth.guard';
 import { RefreshTokenDto } from '@/auth/dto/refresh-token.dto';
-import { DeviceUtil, extractFrontendUrl } from '@/common/utils';
+import { DeviceUtil, extractFrontendUrl, isAllowedFrontendUrl } from '@/common/utils';
 import { GoogleAuthGuard } from '@/auth/guards/google-auth.guard';
 import { Public, CurrentUser, type UserPayload } from '@/common/decorators';
 
@@ -82,7 +83,11 @@ export class AuthController {
     const result = await this.authService.googleLogin(req.user as any, deviceInfo);
 
     // Return tokens in the URL fragment so the frontend can store them locally.
-    const redirectUrl = req.query.state as string;
+    const redirectUrl = req.query.state;
+    if (typeof redirectUrl !== 'string' || !isAllowedFrontendUrl(redirectUrl)) {
+      throw new BadRequestException('Invalid OAuth redirect URL');
+    }
+
     const redirect = new URL(redirectUrl);
     redirect.hash = new URLSearchParams({
       accessToken: result.accessToken,

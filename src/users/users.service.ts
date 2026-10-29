@@ -5,6 +5,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
+import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 
 import { createPaginatedData } from '@/common/utils';
@@ -85,7 +86,7 @@ export class UsersService {
     const processedImage = await this.imageProcessing.processImage(file);
 
     // Generate storage key with correct extension based on mimetype
-    const storageKey = `general/avatars/${userId}.webp`;
+    const storageKey = `general/avatars/${userId}-${randomUUID()}.webp`;
 
     // Upload to storage and return encoded key
     const avatarKey = await this.storage
@@ -100,18 +101,16 @@ export class UsersService {
       data: { avatar: avatarKey },
     });
 
-    if (storageKey !== user.avatar) {
-      // Check for race condition: if count is 0, another request already updated the avatar
-      if (updatedUser.count === 0) {
-        await this.storage.delete(storageKey);
+    // Check for race condition: each upload has its own key, so a failed update
+    // can safely remove only the file created by that request.
+    if (updatedUser.count === 0) {
+      await this.storage.delete(avatarKey);
+      throw new ConflictException('Failed to update avatar. Please try again');
+    }
 
-        throw new ConflictException('Failed to update avatar. Please try again');
-      } else {
-        // Delete old avatar from storage if it's not a full URL (legacy data from Google OAuth)
-        if (user.avatar && !/^https?:\/\//.test(user.avatar)) {
-          await this.storage.delete(user.avatar);
-        }
-      }
+    // Delete old avatar from storage if it's not a full URL (legacy data from Google OAuth)
+    if (user.avatar && !/^https?:\/\//.test(user.avatar) && user.avatar !== avatarKey) {
+      await this.storage.delete(user.avatar);
     }
   }
 

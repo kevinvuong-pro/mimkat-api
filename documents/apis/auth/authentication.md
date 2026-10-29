@@ -335,8 +335,8 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-| Field        | Type   | Required | Description                                 |
-| ------------ | ------ | -------- | ------------------------------------------- |
+| Field        | Type   | Required | Description                     |
+| ------------ | ------ | -------- | ------------------------------- |
 | refreshToken | string | Yes      | Refresh token đang lưu ở client |
 
 #### Response
@@ -435,8 +435,8 @@ Sử dụng refresh token trong request body để lấy cặp access token và 
 }
 ```
 
-| Field        | Type   | Required | Description                                 |
-| ------------ | ------ | -------- | ------------------------------------------- |
+| Field        | Type   | Required | Description                     |
+| ------------ | ------ | -------- | ------------------------------- |
 | refreshToken | string | Yes      | Refresh token đang lưu ở client |
 
 #### Response
@@ -654,7 +654,7 @@ curl -X POST http://localhost:3000/auth/refresh \
   - `userAgent`: Full User-Agent string
   - `lastUsedAt`: Timestamp lần cuối sử dụng token
   - `createdAt`: Timestamp tạo session
-- **Session Cleanup**: Tự động xóa sessions hết hạn khi refresh token
+- **Session Cleanup**: Tự động xóa sessions hết hạn khi refresh token và bởi cleanup job định kỳ
 - **Refresh Token Security**: Refresh token được hash với bcrypt trước khi lưu vào database để tăng cường bảo mật. Khi verify, sử dụng bcrypt.compare() để so sánh token từ client với hash trong database
 - **Absolute Expiry Field**: Session có thêm `absoluteExpiresAt` để giới hạn đăng nhập tối đa 30 ngày
 
@@ -669,7 +669,9 @@ curl -X POST http://localhost:3000/auth/refresh \
   5. Extract `sessionId` from payload (if present)
   6. Find user by ID từ payload
   7. Check user exists và `isActive = true`
-  8. Return user object with `sessionId` attached
+  8. Find session by `sessionId`, verify session thuộc user hiện tại
+  9. Reject nếu `expiresAt` hoặc `absoluteExpiresAt` đã quá hạn
+  10. Return user object with `sessionId` attached
 - **Payload Structure**:
   ```json
   {

@@ -40,7 +40,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       where: { id: payload.sessionId },
     });
 
-    if (!session) {
+    const now = new Date();
+    if (
+      !session ||
+      session.expiresAt < now ||
+      session.userId !== user.id ||
+      session.absoluteExpiresAt < now
+    ) {
       throw new ForbiddenException('Session is invalid or has been logged out');
     }
 
