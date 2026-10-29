@@ -48,7 +48,7 @@ sudo usermod -aG docker $USER
 
 ## Cấu hình Docker Compose
 
-File `docker-compose.yml` đã được tạo sẵn trong thư mục gốc của dự án với cấu hình:
+File `dev-compose.yml` đã được tạo sẵn trong thư mục gốc của dự án với cấu hình:
 
 ```yaml
 version: '3.8'
@@ -123,7 +123,7 @@ REDIS_URL="redis://localhost:6379"
 ### 1. Khởi động services
 
 ```bash
-docker-compose up -d
+docker compose -f dev-compose.yml up -d
 ```
 
 - Flag `-d` để chạy ở chế độ background (detached)
@@ -133,7 +133,7 @@ docker-compose up -d
 
 ```bash
 # Xem các container đang chạy
-docker-compose ps
+docker compose -f dev-compose.yml ps
 
 # Hoặc
 docker ps
@@ -145,43 +145,43 @@ Bạn sẽ thấy 2 container `mimkat-postgres` và `mimkat-redis` đang chạy.
 
 ```bash
 # Xem logs realtime cho tất cả service
-docker-compose logs -f
+docker compose -f dev-compose.yml logs -f
 
 # Xem logs realtime cho PostgreSQL
-docker-compose logs -f postgres
+docker compose -f dev-compose.yml logs -f postgres
 
 # Xem logs realtime cho Redis
-docker-compose logs -f redis
+docker compose -f dev-compose.yml logs -f redis
 
 # Chỉ xem logs PostgreSQL (không follow)
-docker-compose logs postgres
+docker compose -f dev-compose.yml logs postgres
 ```
 
 ### 4. Dừng services
 
 ```bash
 # Dừng nhưng giữ lại data
-docker-compose stop
+docker compose -f dev-compose.yml stop
 
 # Dừng và xóa container (data vẫn được giữ trong volume)
-docker-compose down
+docker compose -f dev-compose.yml down
 ```
 
 ### 5. Khởi động lại
 
 ```bash
 # Nếu đã stop
-docker-compose start
+docker compose -f dev-compose.yml start
 
 # Hoặc dùng up lại
-docker-compose up -d
+docker compose -f dev-compose.yml up -d
 ```
 
 ### 6. Kiểm tra Redis
 
 ```bash
 # Test Redis từ trong container
-docker-compose exec redis redis-cli ping
+docker compose -f dev-compose.yml exec redis redis-cli ping
 
 # Kết quả mong đợi
 PONG
@@ -192,8 +192,8 @@ PONG
 ### Kết nối vào PostgreSQL CLI
 
 ```bash
-# Từ docker-compose
-docker-compose exec postgres psql -U kwong2000 -d mimkat
+# Từ docker compose -f dev-compose.yml
+docker compose -f dev-compose.yml exec postgres psql -U kwong2000 -d mimkat
 
 # Hoặc từ docker
 docker exec -it mimkat-postgres psql -U kwong2000 -d mimkat
@@ -219,10 +219,10 @@ SELECT * FROM users;
 
 ```bash
 # Dừng và xóa containers + volumes
-docker-compose down -v
+docker compose -f dev-compose.yml down -v
 
 # Khởi động lại
-docker-compose up -d
+docker compose -f dev-compose.yml up -d
 
 # Chạy lại migrations
 npm run prisma:migrate
@@ -232,23 +232,23 @@ npm run prisma:migrate
 
 ```bash
 # Export database ra file
-docker-compose exec postgres pg_dump -U kwong2000 mimkat > backup.sql
+docker compose -f dev-compose.yml exec postgres pg_dump -U kwong2000 mimkat > backup.sql
 
 # Hoặc với timestamp
-docker-compose exec postgres pg_dump -U kwong2000 mimkat > backup-$(date +%Y%m%d-%H%M%S).sql
+docker compose -f dev-compose.yml exec postgres pg_dump -U kwong2000 mimkat > backup-$(date +%Y%m%d-%H%M%S).sql
 ```
 
 ### Restore database từ backup
 
 ```bash
 # Import từ file backup
-docker-compose exec -T postgres psql -U kwong2000 mimkat < backup.sql
+docker compose -f dev-compose.yml exec -T postgres psql -U kwong2000 mimkat < backup.sql
 ```
 
 ### Kết nối vào Redis CLI
 
 ```bash
-docker-compose exec redis redis-cli
+docker compose -f dev-compose.yml exec redis redis-cli
 ```
 
 Một số lệnh Redis cơ bản:
@@ -263,7 +263,7 @@ EXIT
 
 ### Thay đổi mật khẩu
 
-Nếu muốn thay đổi mật khẩu, sửa trong `docker-compose.yml`:
+Nếu muốn thay đổi mật khẩu, sửa trong `dev-compose.yml`:
 
 ```yaml
 environment:
@@ -273,8 +273,8 @@ environment:
 Sau đó:
 
 ```bash
-docker-compose down -v
-docker-compose up -d
+docker compose -f dev-compose.yml down -v
+docker compose -f dev-compose.yml up -d
 ```
 
 Và cập nhật `DATABASE_URL` trong `.env`:
@@ -301,7 +301,7 @@ lsof -i :5432
 kill -9 <PID>
 ```
 
-**Giải pháp 2:** Đổi port trong docker-compose.yml
+**Giải pháp 2:** Đổi port trong dev-compose.yml
 
 ```yaml
 ports:
@@ -330,7 +330,7 @@ brew services stop redis
 sudo systemctl stop redis
 ```
 
-**Giải pháp 2:** Đổi port trong docker-compose.yml
+**Giải pháp 2:** Đổi port trong dev-compose.yml
 
 ```yaml
 ports:
@@ -347,11 +347,11 @@ REDIS_URL="redis://localhost:6380"
 
 ```bash
 # Xem logs để debug
-docker-compose logs postgres
+docker compose -f dev-compose.yml logs postgres
 
 # Xóa và tạo lại
-docker-compose down -v
-docker-compose up -d
+docker compose -f dev-compose.yml down -v
+docker compose -f dev-compose.yml up -d
 ```
 
 ### Permission denied khi chạy docker commands
@@ -371,26 +371,26 @@ newgrp docker
 
 ```bash
 # Kiểm tra healthcheck
-docker-compose ps
+docker compose -f dev-compose.yml ps
 
 # Nếu unhealthy, xem logs
-docker-compose logs postgres
+docker compose -f dev-compose.yml logs postgres
 
 # Test connection
-docker-compose exec postgres pg_isready -U kwong2000
+docker compose -f dev-compose.yml exec postgres pg_isready -U kwong2000
 
 # Test Redis
-docker-compose exec redis redis-cli ping
+docker compose -f dev-compose.yml exec redis redis-cli ping
 ```
 
 ### Data bị mất sau khi restart
 
-**Nguyên nhân:** Chạy `docker-compose down -v` sẽ xóa volumes
+**Nguyên nhân:** Chạy `docker compose -f dev-compose.yml down -v` sẽ xóa volumes
 
 **Giải pháp:**
 
-- Chỉ dùng `docker-compose down` (không có flag `-v`)
-- Hoặc dùng `docker-compose stop` thay vì `down`
+- Chỉ dùng `docker compose -f dev-compose.yml down` (không có flag `-v`)
+- Hoặc dùng `docker compose -f dev-compose.yml stop` thay vì `down`
 
 ## Lưu ý quan trọng
 
@@ -418,46 +418,46 @@ docker-compose exec redis redis-cli ping
 - Data được lưu trong Docker volume `postgres_data`
 - Data Redis được lưu trong Docker volume `redis_data`
 - Volume tồn tại ngay cả khi container bị xóa
-- Chỉ mất data khi chạy `docker-compose down -v` hoặc xóa volume thủ công
+- Chỉ mất data khi chạy `docker compose -f dev-compose.yml down -v` hoặc xóa volume thủ công
 
 ## Tóm tắt Commands
 
 ```bash
 # Khởi động
-docker-compose up -d
+docker compose -f dev-compose.yml up -d
 
 # Dừng (giữ data)
-docker-compose stop
+docker compose -f dev-compose.yml stop
 
 # Dừng và xóa container (giữ data)
-docker-compose down
+docker compose -f dev-compose.yml down
 
 # Xóa tất cả (bao gồm data)
-docker-compose down -v
+docker compose -f dev-compose.yml down -v
 
 # Xem logs
-docker-compose logs -f postgres
+docker compose -f dev-compose.yml logs -f postgres
 
 # Xem logs Redis
-docker-compose logs -f redis
+docker compose -f dev-compose.yml logs -f redis
 
 # Kiểm tra status
-docker-compose ps
+docker compose -f dev-compose.yml ps
 
 # Kết nối PostgreSQL CLI
-docker-compose exec postgres psql -U kwong2000 -d mimkat
+docker compose -f dev-compose.yml exec postgres psql -U kwong2000 -d mimkat
 
 # Kết nối Redis CLI
-docker-compose exec redis redis-cli
+docker compose -f dev-compose.yml exec redis redis-cli
 
 # Test Redis
-docker-compose exec redis redis-cli ping
+docker compose -f dev-compose.yml exec redis redis-cli ping
 
 # Backup
-docker-compose exec postgres pg_dump -U kwong2000 mimkat > backup.sql
+docker compose -f dev-compose.yml exec postgres pg_dump -U kwong2000 mimkat > backup.sql
 
 # Restore
-docker-compose exec -T postgres psql -U kwong2000 mimkat < backup.sql
+docker compose -f dev-compose.yml exec -T postgres psql -U kwong2000 mimkat < backup.sql
 ```
 
 ---

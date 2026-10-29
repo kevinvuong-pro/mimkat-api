@@ -90,7 +90,7 @@ cp .env.example .env
 Start PostgreSQL database with Docker Compose:
 
 ```bash
-docker-compose up -d
+docker compose -f dev-compose.yml up -d
 ```
 
 This will start:
@@ -216,8 +216,8 @@ npm run prisma:migrate   # Run migrations
 npx prisma studio        # Open Prisma Studio (database GUI)
 
 # Docker
-docker-compose up -d     # Start database in background
-docker-compose down      # Stop database
+docker compose -f dev-compose.yml up -d     # Start database in background
+docker compose -f dev-compose.yml down      # Stop database
 ```
 
 ## 📁 Project Structure

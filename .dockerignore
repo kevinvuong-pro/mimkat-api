@@ -1,0 +1,11 @@
+.env
+.git
+dist
+test
+*.log
+.env.*
+coverage
+documents
+.gitignore
+node_modules
+!.env.example

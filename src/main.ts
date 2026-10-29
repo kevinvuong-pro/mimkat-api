@@ -90,10 +90,10 @@ async function bootstrap() {
   // Graceful shutdown
   app.enableShutdownHooks();
 
-  const port = process.env.PORT ?? 3000;
+  const port = Number(process.env.PORT ?? 3000);
 
-  await app.listen(port);
-  logger.log(`🚀 Application is running on: http://localhost:${port}`);
+  await app.listen(port, '0.0.0.0');
+  logger.log(`Application is running on port ${port}`);
 }
 
 bootstrap().catch((err) => {
