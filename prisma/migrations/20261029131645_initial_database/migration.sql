@@ -26,6 +26,7 @@ CREATE TABLE "sessions" (
     "userId" TEXT NOT NULL,
     "deviceName" TEXT,
     "deviceType" TEXT,
+    "location" TEXT,
     "ipAddress" TEXT,
     "userAgent" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
