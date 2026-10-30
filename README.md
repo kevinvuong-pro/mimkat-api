@@ -116,6 +116,10 @@ npm run prisma:generate
 npx prisma generate
 ```
 
+Prisma 7 generates the client into `src/generated/prisma` and uses the PostgreSQL
+driver adapter. Keep `DATABASE_URL` configured when running Prisma migration
+commands.
+
 ## ⚙️ Configuration
 
 Create a `.env` file in the root directory with the following environment variables:

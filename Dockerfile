@@ -1,28 +1,38 @@
-FROM node:20.19.5-bookworm-slim AS build
+FROM node:22.12.0-bookworm-slim AS build
 
 WORKDIR /app
+
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+
+ENV DATABASE_URL=postgresql://localhost:5432/mimkat
 
 COPY package*.json ./
 RUN npm ci
 
 COPY prisma ./prisma
+COPY prisma.config.ts ./
 RUN npx prisma generate
 
 COPY nest-cli.json tsconfig*.json ./
 COPY src ./src
 RUN npm run build
 
-FROM node:20.19.5-bookworm-slim AS runtime
+FROM node:22.12.0-bookworm-slim AS runtime
 
 ENV NODE_ENV=production
 WORKDIR /app
 
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends openssl \
+  && rm -rf /var/lib/apt/lists/*
+
 COPY --chown=node:node package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
-COPY --from=build --chown=node:node /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=build --chown=node:node /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=build --chown=node:node /app/prisma ./prisma
+COPY --from=build --chown=node:node /app/prisma.config.ts ./prisma.config.ts
 COPY --from=build --chown=node:node /app/dist ./dist
 
 USER node

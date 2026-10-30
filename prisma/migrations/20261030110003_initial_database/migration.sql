@@ -14,8 +14,10 @@ CREATE TABLE "users" (
     "isEmailVerified" BOOLEAN NOT NULL DEFAULT false,
     "verificationTokenExpiry" TIMESTAMP(3),
     "verificationToken" TEXT,
+    "verificationTokenDigest" TEXT,
     "passwordResetTokenExpiry" TIMESTAMP(3),
     "passwordResetToken" TEXT,
+    "passwordResetTokenDigest" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -51,7 +53,13 @@ CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
 CREATE UNIQUE INDEX "users_verificationToken_key" ON "users"("verificationToken");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "users_verificationTokenDigest_key" ON "users"("verificationTokenDigest");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "users_passwordResetToken_key" ON "users"("passwordResetToken");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_passwordResetTokenDigest_key" ON "users"("passwordResetTokenDigest");
 
 -- CreateIndex
 CREATE INDEX "users_email_idx" ON "users"("email");
