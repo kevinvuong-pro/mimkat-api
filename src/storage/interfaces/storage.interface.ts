@@ -1,5 +1,6 @@
 interface IStorageService {
   initialize(): Promise<void>;
+  healthCheck(): Promise<void>;
 
   upload(file: Buffer, key: string, mimetype: string): Promise<string>;
 

@@ -27,8 +27,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
-    const isDevelopment = process.env.NODE_ENV !== 'production';
-
     let validationErrors = undefined;
     let error = 'Internal Server Error';
     let message = 'Internal server error';
@@ -54,8 +52,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
         }
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+      // Keep internal exception details in logs only.
+      message = 'Internal server error';
+      error = 'Internal Server Error';
     }
 
     const skipLog = status === HttpStatus.NOT_FOUND && isCdpProbePath(request.url);
@@ -77,8 +76,6 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     if (validationErrors) errorResponse.errors = validationErrors;
-
-    if (isDevelopment && exception instanceof Error) errorResponse.stack = exception.stack;
 
     response.status(status).json(errorResponse);
   }

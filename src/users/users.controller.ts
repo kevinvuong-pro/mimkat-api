@@ -45,7 +45,16 @@ export class UsersController {
 
   @Put('me/avatar')
   @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: {
+        files: 1,
+        parts: 12,
+        fields: 10,
+        fileSize: 5 * 1024 * 1024,
+      },
+    }),
+  )
   @Throttle({ default: { limit: 5, ttl: 3600000 } }) // 5 uploads per hour
   updateAvatar(
     @CurrentUser() user: UserPayload,
@@ -56,7 +65,7 @@ export class UsersController {
             maxSizeByType: {
               'image/gif': 5 * 1024 * 1024, // 5MB for GIF
             },
-            defaultMaxSize: 10 * 1024 * 1024, // 10MB for other image types
+            defaultMaxSize: 5 * 1024 * 1024, // 5MB for other image types
           }),
           new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif)$/ }),
         ],

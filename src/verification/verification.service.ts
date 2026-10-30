@@ -15,36 +15,32 @@ export class VerificationService {
   ) {}
 
   async verifyEmail(token: string) {
-    // Find user with matching token that hasn't expired
-    const users = await this.prisma.user.findMany({
+    const tokenDigest = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.prisma.user.findUnique({
       where: {
-        isEmailVerified: false,
-        verificationTokenExpiry: { gte: new Date() },
+        verificationTokenDigest: tokenDigest,
       },
     });
 
-    // Check token against all unverified users
-    let matchedUserId: string | null = null;
-    for (const user of users) {
-      if (user.verificationToken) {
-        const isValid = await bcrypt.compare(token, user.verificationToken);
-
-        if (isValid) {
-          matchedUserId = user.id;
-          break;
-        }
-      }
+    if (
+      !user ||
+      user.isEmailVerified ||
+      !user.verificationToken ||
+      !user.verificationTokenExpiry ||
+      user.verificationTokenExpiry < new Date() ||
+      !(await bcrypt.compare(token, user.verificationToken))
+    ) {
+      throw new BadRequestException('Invalid or expired verification token');
     }
-
-    if (!matchedUserId) throw new BadRequestException('Invalid or expired verification token');
 
     // Update user as verified
     await this.prisma.user.update({
-      where: { id: matchedUserId },
+      where: { id: user.id },
       data: {
         isEmailVerified: true,
         verificationToken: null,
         verificationTokenExpiry: null,
+        verificationTokenDigest: null,
       },
     });
   }
@@ -70,6 +66,10 @@ export class VerificationService {
       data: {
         verificationTokenExpiry,
         verificationToken: hashedToken,
+        verificationTokenDigest: crypto
+          .createHash('sha256')
+          .update(verificationToken)
+          .digest('hex'),
       },
     });
 
@@ -108,6 +108,7 @@ export class VerificationService {
       data: {
         passwordResetToken: hashedToken,
         passwordResetTokenExpiry: resetTokenExpiry,
+        passwordResetTokenDigest: crypto.createHash('sha256').update(resetToken).digest('hex'),
       },
     });
 
@@ -124,43 +125,38 @@ export class VerificationService {
   }
 
   async resetPassword(token: string, newPassword: string) {
-    // Find users with non-expired reset tokens
-    const users = await this.prisma.user.findMany({
+    const tokenDigest = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.prisma.user.findUnique({
       where: {
-        passwordResetToken: { not: null },
-        passwordResetTokenExpiry: { gte: new Date() },
+        passwordResetTokenDigest: tokenDigest,
       },
     });
 
-    // Check token against all users with active reset tokens
-    let matchedUserId: string | null = null;
-    for (const user of users) {
-      if (user.passwordResetToken) {
-        const isValid = await bcrypt.compare(token, user.passwordResetToken);
-
-        if (isValid) {
-          matchedUserId = user.id;
-          break;
-        }
-      }
+    if (
+      !user ||
+      !user.passwordResetToken ||
+      !user.passwordResetTokenExpiry ||
+      user.passwordResetTokenExpiry < new Date() ||
+      !(await bcrypt.compare(token, user.passwordResetToken))
+    ) {
+      throw new BadRequestException('Invalid or expired reset token');
     }
-
-    if (!matchedUserId) throw new BadRequestException('Invalid or expired reset token');
 
     // Hash new password
     const hashedPassword = await bcrypt.hash(newPassword, 12);
 
     // Update user password and clear reset token
     await this.prisma.user.update({
-      where: { id: matchedUserId },
+      where: { id: user.id },
       data: {
         password: hashedPassword,
         passwordResetToken: null,
         passwordResetTokenExpiry: null,
+        passwordResetTokenDigest: null,
       },
     });
 
     // Invalidate all existing sessions for security
-    await this.prisma.session.deleteMany({ where: { userId: matchedUserId } });
+    await this.prisma.session.deleteMany({ where: { userId: user.id } });
   }
 }

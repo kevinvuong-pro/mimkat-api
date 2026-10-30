@@ -64,6 +64,10 @@ export class S3Service implements IStorageService, OnModuleInit {
     }
   }
 
+  async healthCheck(): Promise<void> {
+    await this.s3Client.send(new HeadBucketCommand({ Bucket: this.bucketName }));
+  }
+
   async upload(file: Buffer, key: string, mimetype: string): Promise<string> {
     // Validate key format
     if (!key || key.trim() === '') throw new Error('Storage key cannot be empty');

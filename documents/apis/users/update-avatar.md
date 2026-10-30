@@ -12,7 +12,6 @@ PUT /users/me/avatar
 
 Yêu cầu JWT token trong:
 
-- **Cookie**: `access_token` (HttpOnly cookie)
 - **Header**: `Authorization: Bearer <access_token>`
 
 ## Rate Limiting
@@ -39,8 +38,7 @@ Content-Type: multipart/form-data
 
 **Giới hạn theo loại file:**
 
-- **GIF files:** Maximum 5 MB
-- **Other image types (JPG, PNG, WebP):** Maximum 10 MB
+- **All supported image types:** Maximum 5 MB
 
 Lý do giới hạn GIF nhỏ hơn:
 
@@ -52,9 +50,9 @@ Larger files sẽ bị reject với error 400 và message cụ thể về giới
 
 #### Allowed File Types
 
-- JPG / JPEG (`.jpg`, `.jpeg`) - Maximum 10 MB
-- PNG (`.png`) - Maximum 10 MB
-- WebP (`.webp`) - Maximum 10 MB
+- JPG / JPEG (`.jpg`, `.jpeg`) - Maximum 5 MB
+- PNG (`.png`) - Maximum 5 MB
+- WebP (`.webp`) - Maximum 5 MB
 - GIF (`.gif`) - Maximum 5 MB (animation preserved, converted to WebP animated)
 
 #### Image Requirements
@@ -89,7 +87,7 @@ Larger files sẽ bị reject với error 400 và message cụ thể về giới
 
 Khi file size vượt quá giới hạn cho phép:
 
-**For GIF files (> 5 MB):**
+**For files larger than 5 MB:**
 
 ```json
 {
@@ -102,13 +100,13 @@ Khi file size vượt quá giới hạn cho phép:
 }
 ```
 
-**For other image types (> 10 MB):**
+**For files larger than 5 MB:**
 
 ```json
 {
   "success": false,
   "statusCode": 400,
-  "message": "File size (12.50MB) exceeds the maximum allowed size (10.00MB) for image/jpeg",
+  "message": "File size (5.50MB) exceeds the maximum allowed size (5.00MB) for image/jpeg",
   "error": "Bad Request",
   "timestamp": "2024-12-01T08:00:00.000Z",
   "path": "/users/me/avatar"
@@ -138,7 +136,7 @@ Khi ảnh < 50x50 pixels:
 {
   "success": false,
   "statusCode": 400,
-  "message": "Image too small. Minimum dimensions: 50x50 pixels.",
+  "message": "Image dimensions are invalid or exceed the maximum pixel limit.",
   "error": "Bad Request",
   "timestamp": "2024-12-01T08:00:00.000Z",
   "path": "/users/me/avatar"
@@ -385,7 +383,7 @@ model User {
 
 ### File Validation
 
-- **Size limit:** 10 MB (prevents memory issues)
+- **Size limit:** 5 MB (prevents memory issues)
 - **Type validation:** Only image types
 - **Content validation:** Sharp validates actual image content
 - **Dimension validation:** Min 50x50, aspect ratio 1:5 to 5:1
@@ -431,9 +429,9 @@ Typical upload flow:
 ```javascript
 function validateImage(file) {
   // Check file size based on type
-  const maxSize = file.type === 'image/gif' ? 5 * 1024 * 1024 : 10 * 1024 * 1024;
+  const maxSize = 5 * 1024 * 1024;
   if (file.size > maxSize) {
-    const limit = file.type === 'image/gif' ? '5 MB' : '10 MB';
+    const limit = '5 MB';
     throw new Error(`File must be less than ${limit}`);
   }
 
@@ -500,7 +498,7 @@ try {
 // In controller
 @Put('avatar')
 @UseInterceptors(FileInterceptor('file', {
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
 }))
 ```
 
@@ -542,7 +540,7 @@ this.deleteOldAvatar(oldKey).catch((err) =>
 
 **Check:**
 
-- File size < 10 MB?
+- File size < 5 MB?
 - File type valid (JPG, PNG, WebP, GIF)?
 - Image dimensions >= 50x50?
 - Aspect ratio between 1:5 and 5:1?

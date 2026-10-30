@@ -16,7 +16,7 @@ Lấy thông tin profile đầy đủ của user đang đăng nhập, bao gồm 
 
 **Endpoint**: `GET /users/me`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 **Rate Limit**: Không giới hạn
 
@@ -24,12 +24,6 @@ Lấy thông tin profile đầy đủ của user đang đăng nhập, bao gồm 
 
 ```
 Authorization: Bearer {accessToken}
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 ```
 
 #### Response
@@ -134,7 +128,7 @@ curl -X GET http://localhost:3000/users/me \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-**Using cookies:**
+**Authentication uses the Authorization header:**
 
 ```bash
 curl -X GET http://localhost:3000/users/me \
@@ -149,7 +143,7 @@ Lấy thông tin public profile của user khác thông qua ID hoặc username. 
 
 **Endpoint**: `GET /users/:identifier`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 **Rate Limit**: Không giới hạn
 
@@ -163,12 +157,6 @@ Lấy thông tin public profile của user khác thông qua ID hoặc username. 
 
 ```
 Authorization: Bearer {accessToken}
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 ```
 
 #### Response
@@ -254,7 +242,7 @@ curl -X GET http://localhost:3000/users/johndoe \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
-**Using cookies:**
+**Authentication uses the Authorization header:**
 
 ```bash
 curl -X GET http://localhost:3000/users/johndoe \

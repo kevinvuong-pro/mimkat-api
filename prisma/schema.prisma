@@ -33,10 +33,12 @@ model User {
   // Email Verification
   verificationTokenExpiry DateTime?
   verificationToken       String?   @unique
+  verificationTokenDigest String?   @unique
 
   // Password Reset
   passwordResetTokenExpiry DateTime?
   passwordResetToken       String?   @unique
+  passwordResetTokenDigest String?   @unique
 
   // Relations
   sessions Session[]

@@ -91,6 +91,13 @@ export class AuthService {
       return null;
     }
 
+    const user = await this.prisma.user.findUnique({
+      select: { isActive: true },
+      where: { id: session.userId },
+    });
+
+    if (!user?.isActive) return null;
+
     const isMatch = await bcrypt.compare(refreshToken, session.refreshToken);
 
     return isMatch ? session : null;
@@ -153,6 +160,10 @@ export class AuthService {
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = await bcrypt.hash(verificationToken, 10);
+    const verificationTokenDigest = crypto
+      .createHash('sha256')
+      .update(verificationToken)
+      .digest('hex');
 
     // Token expires in 48 hours
     const verificationTokenExpiry = new Date();
@@ -171,6 +182,7 @@ export class AuthService {
         verificationTokenExpiry,
         password: hashedPassword,
         verificationToken: hashedToken,
+        verificationTokenDigest,
       },
     });
 

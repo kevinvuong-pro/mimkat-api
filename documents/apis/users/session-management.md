@@ -16,7 +16,7 @@ Lấy danh sách tất cả các thiết bị đang đăng nhập của user hi�
 
 **Endpoint**: `GET /users/sessions`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 **Rate Limit**: Không giới hạn
 
@@ -24,12 +24,6 @@ Lấy danh sách tất cả các thiết bị đang đăng nhập của user hi�
 
 ```
 Authorization: Bearer {accessToken}
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 ```
 
 #### Query Parameters
@@ -156,7 +150,7 @@ curl -X GET "http://localhost:3000/users/sessions?page=2&limit=5" \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-**Using cookies:**
+**Authentication uses the Authorization header:**
 
 ```bash
 # Get first page (default)
@@ -199,7 +193,7 @@ curl -X GET "http://localhost:3000/users/sessions?page=1&limit=20" \
 
 **Endpoint**: `DELETE /users/sessions`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 **Rate Limit**: Không giới hạn
 
@@ -207,12 +201,6 @@ curl -X GET "http://localhost:3000/users/sessions?page=1&limit=20" \
 
 ```
 Authorization: Bearer {accessToken}
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 ```
 
 #### Response
@@ -239,7 +227,7 @@ curl -X DELETE http://localhost:3000/users/sessions \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-**Using cookies:**
+**Authentication uses the Authorization header:**
 
 ```bash
 curl -X DELETE http://localhost:3000/users/sessions \
@@ -249,7 +237,7 @@ curl -X DELETE http://localhost:3000/users/sessions \
 #### Notes
 
 - Xóa **TẤT CẢ** sessions của user (gọi `prisma.session.deleteMany({ where: { userId } })`)
-- Xoá cookies xác thực (`accessToken` và `refreshToken`) trên thiết bị hiện tại để force logout ngay lập tức
+- Xóa session hiện tại trên server để force logout ngay lập tức
 - Bao gồm cả thiết bị hiện tại đang gọi API
 - User cần đăng nhập lại trên tất cả thiết bị
 - Access tokens hiện tại vẫn valid cho đến khi hết hạn (1h), nhưng không thể refresh
@@ -268,7 +256,7 @@ curl -X DELETE http://localhost:3000/users/sessions \
 
 **Endpoint**: `DELETE /users/sessions/:sessionId`
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 **Rate Limit**: Không giới hạn
 
@@ -276,12 +264,6 @@ curl -X DELETE http://localhost:3000/users/sessions \
 
 ```
 Authorization: Bearer {accessToken}
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 ```
 
 #### URL Parameters
@@ -381,7 +363,7 @@ curl -X DELETE http://localhost:3000/users/sessions/clx1234567890abcdefghij \
   -H "Authorization: Bearer YOUR_ACCESS_TOKEN"
 ```
 
-**Using cookies:**
+**Authentication uses the Authorization header:**
 
 ```bash
 curl -X DELETE http://localhost:3000/users/sessions/clx1234567890abcdefghij \

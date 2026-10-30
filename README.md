@@ -280,6 +280,45 @@ npm run test:cov
 npm run test:e2e
 ```
 
+## API response contract
+
+Successful responses are wrapped by the global response interceptor:
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Data retrieved successfully",
+  "data": {},
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "path": "/resource"
+}
+```
+
+Error responses use the same stable shape for both expected HTTP errors and
+unexpected server errors:
+
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "message": "email must be an email",
+      "constraint": "isEmail"
+    }
+  ],
+  "timestamp": "2026-01-01T00:00:00.000Z",
+  "path": "/auth/register"
+}
+```
+
+Stack traces and internal exception details are logged server-side only and
+are never returned to clients.
+
 ## 🚀 Deployment
 
 ### 1. Build the application

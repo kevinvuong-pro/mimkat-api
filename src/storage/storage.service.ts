@@ -15,6 +15,10 @@ export class StorageService implements IStorageService {
     return this.provider.initialize();
   }
 
+  async healthCheck(): Promise<void> {
+    return this.provider.healthCheck();
+  }
+
   async upload(file: Buffer, key: string, mimetype: string): Promise<string> {
     return this.provider.upload(file, key, mimetype);
   }

@@ -4,6 +4,8 @@ import { INestApplication } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppModule } from '@/app.module';
+import { HttpExceptionFilter } from '@/common/filters';
+import { ResponseInterceptor } from '@/common/interceptors';
 
 describe('AppController (e2e)', () => {
   let app: INestApplication<App>;
@@ -14,7 +16,13 @@ describe('AppController (e2e)', () => {
     }).compile();
 
     app = moduleFixture.createNestApplication();
+    app.useGlobalFilters(new HttpExceptionFilter());
+    app.useGlobalInterceptors(new ResponseInterceptor());
     await app.init();
+  });
+
+  afterEach(async () => {
+    await app.close();
   });
 
   it('/ (GET)', () => {
@@ -28,6 +36,20 @@ describe('AppController (e2e)', () => {
         expect(res.body).toHaveProperty('statusCode', 200);
         expect(res.body).toHaveProperty('data', 'Hello World!');
         expect(res.body).toHaveProperty('message', 'Data retrieved successfully');
+      });
+  });
+
+  it('formats HTTP errors without exposing internal details', () => {
+    return request(app.getHttpServer())
+      .get('/missing-route')
+      .expect(404)
+      .expect((res) => {
+        expect(res.body).toMatchObject({
+          success: false,
+          statusCode: 404,
+          path: '/missing-route',
+        });
+        expect(res.body).not.toHaveProperty('stack');
       });
   });
 });

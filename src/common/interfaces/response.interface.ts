@@ -1,7 +1,6 @@
 interface ErrorResponse {
   path: string;
   error: string;
-  stack?: string; // Only in development
   success: false;
   message: string;
   timestamp: string;
@@ -36,6 +35,7 @@ interface ValidationError {
   value?: any;
   field: string;
   message: string;
+  constraint?: string;
 }
 
 export type { ErrorResponse, PaginatedData, PaginationMeta, SuccessResponse, ValidationError };

@@ -12,7 +12,6 @@ PUT /users/me
 
 Yêu cầu JWT token trong:
 
-- **Cookie**: `access_token` (HttpOnly cookie)
 - **Header**: `Authorization: Bearer <access_token>`
 
 ## Request Body

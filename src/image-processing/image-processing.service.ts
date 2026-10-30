@@ -11,6 +11,7 @@ export interface ProcessedImage {
 export class ImageProcessingService {
   private readonly QUALITY = 80;
   private readonly MAX_DIMENSION = 1024;
+  private readonly MAX_PIXELS = 4096 * 4096;
   private readonly logger = new Logger(ImageProcessingService.name);
   private readonly ALLOWED_MIMETYPES = ['image/gif', 'image/png', 'image/jpeg', 'image/webp'];
 
@@ -25,8 +26,16 @@ export class ImageProcessingService {
       const metadata = await sharp(file.buffer).metadata();
 
       // Validate image dimensions
-      if (metadata.width < 50 || metadata.height < 50) {
-        throw new BadRequestException('Image too small. Minimum dimensions: 50x50 pixels.');
+      if (
+        !metadata.width ||
+        !metadata.height ||
+        metadata.width * metadata.height > this.MAX_PIXELS ||
+        metadata.width < 50 ||
+        metadata.height < 50
+      ) {
+        throw new BadRequestException(
+          'Image dimensions are invalid or exceed the maximum pixel limit.',
+        );
       }
 
       // Validate aspect ratio (prevent banner-like images)

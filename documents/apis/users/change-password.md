@@ -17,19 +17,12 @@ API đổi mật khẩu cho người dùng đã đăng nhập. Hỗ trợ hai tr
 
 **Rate Limit**: 10 requests / 1 giờ (3600 seconds)
 
-**Authentication**: Required (Bearer Token hoặc Cookie)
+**Authentication**: Required (`Authorization: Bearer <access_token>`)
 
 ### Request Headers
 
 ```
 Authorization: Bearer <accessToken>
-Content-Type: application/json
-```
-
-**Or using cookies:**
-
-```
-Cookie: accessToken=<token>
 Content-Type: application/json
 ```
 
@@ -83,7 +76,6 @@ Content-Type: application/json
 5. **Hash new password**: Sử dụng `bcrypt.hash()` với 12 salt rounds
 6. **Update database**: Lưu hashed password vào `user.password`
 7. **Invalidate all sessions**: Xóa tất cả sessions của user để security
-8. **Clear cookies**: Xóa accessToken và refreshToken cookies từ response
 9. **Return success**: User phải login lại với password mới
 
 ---
@@ -334,11 +326,11 @@ curl -X PUT http://localhost:3000/users/password \
 
 5. **Session Invalidation**: Đặt lại mật khẩu, tất cả phiên đăng nhập trên mọi thiết bị sẽ bị xóa để bảo mật. Người dùng cần đăng nhập lại với mật khẩu mới.
 
-6. **Cookie Clearing**: Sau khi thay đổi mật khẩu thành công, server sẽ clear accessToken và refreshToken cookies để force logout ngay lập tức trên browser hiện tại.
+6. **Session invalidation**: Sau khi thay đổi mật khẩu thành công, tất cả session hiện tại bị xóa và user phải đăng nhập lại.
 
 7. **Người dùng Google OAuth**: Người dùng đăng nhập bằng Google mà chưa có mật khẩu có thể đặt mật khẩu mà không cần mật khẩu hiện tại, cho phép họ sử dụng đăng nhập email/password trong tương lai.
 
-8. **JWT Token Required**: Endpoint yêu cầu valid access token để identify user. Token có thể được gửi qua Authorization header hoặc cookie.
+8. **JWT Token Required**: Endpoint yêu cầu access token hợp lệ trong `Authorization` header để xác định user.
 
 ---
 
@@ -398,7 +390,7 @@ curl -X PUT http://localhost:3000/users/password \
 ## Notes
 
 - **QUAN TRỌNG**: Sau khi đổi mật khẩu thành công, TẤT CẢ các phiên đăng nhập trên mọi thiết bị sẽ bị xóa để đảm bảo bảo mật (gọi `prisma.session.deleteMany({ where: { userId } })`).
-- **Cookies Authentication**: accessToken và refreshToken cookies sẽ bị xóa khỏi response để force logout ngay lập tức.
+- **Session invalidation**: Các session hiện tại bị xóa để buộc đăng nhập lại.
 - Người dùng sẽ cần đăng nhập lại bằng mật khẩu mới trên tất cả thiết bị.
 - Hành vi này giống với endpoint `POST /verification/reset-password` để đảm bảo tính nhất quán về bảo mật.
 - Validation mật khẩu tuân theo các quy tắc giống như đăng ký (MinLength: 8, Regex: uppercase + lowercase + number).

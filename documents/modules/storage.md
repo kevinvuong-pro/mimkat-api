@@ -177,7 +177,7 @@ await s3Service.upload(buffer, 'general/avatars/user-123.webp', 'image/webp');
 
 **Error Handling:**
 
-- Log chi tiết error với key, bucket name, region, và stack trace
+- Log chi tiết error ở server-side với key, bucket name, region, và stack trace; stack trace không được trả về API response
 - Throw error ra ngoài để caller xử lý
 
 ### Delete Method

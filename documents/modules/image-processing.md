@@ -26,6 +26,7 @@ src/image-processing/
 
 ```typescript
 private readonly MAX_DIMENSION = 1024;      // Max width/height
+private readonly MAX_PIXELS = 4096 * 4096;  // Decode safety limit
 private readonly QUALITY = 80;              // WebP quality (0-100)
 private readonly ALLOWED_MIMETYPES = [
   'image/gif',
@@ -87,9 +88,10 @@ Chỉ chấp nhận:
 
 #### 2. Minimum Dimensions
 
-Ảnh phải có kích thước tối thiểu: **50x50 pixels**
+Ảnh phải có kích thước tối thiểu: **50x50 pixels** và không vượt quá
+**4096x4096 pixels** tổng số pixel.
 
-**Error:** `BadRequestException` - "Image too small. Minimum dimensions: 50x50 pixels."
+**Error:** `BadRequestException` - "Image dimensions are invalid or exceed the maximum pixel limit."
 
 #### 3. Aspect Ratio Validation
 
@@ -449,7 +451,7 @@ npm install --platform=linux --arch=x64 sharp
 
 **Solutions:**
 
-- Limit upload file size (10MB in controller)
+- Limit upload file size (5MB in controller)
 - Increase Node.js memory: `NODE_OPTIONS=--max-old-space-size=4096`
 - Use Sharp streams for very large files
 
@@ -486,7 +488,7 @@ async upload(
   @UploadedFile(
     new ParseFilePipe({
       validators: [
-        new MaxFileSizeValidator({ maxSize: 10 * 1024 * 1024 }), // 10MB
+        new MaxFileSizeValidator({ maxSize: 5 * 1024 * 1024 }), // 5MB
         new FileTypeValidator({ fileType: /(jpg|jpeg|png|webp|gif)$/ }),
       ],
     }),
