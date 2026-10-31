@@ -5,6 +5,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 
 import { AppModule } from '@/app.module';
 import { HttpExceptionFilter } from '@/common/filters';
+import { PrismaService } from '@/prisma/prisma.service';
 import { ResponseInterceptor } from '@/common/interceptors';
 
 describe('AppController (e2e)', () => {
@@ -50,6 +51,23 @@ describe('AppController (e2e)', () => {
           path: '/missing-route',
         });
         expect(res.body).not.toHaveProperty('stack');
+      });
+  });
+
+  it('returns service unavailable when a health dependency fails', async () => {
+    const prisma = app.get(PrismaService);
+    jest.spyOn(prisma, '$queryRaw').mockRejectedValueOnce(new Error('database unavailable'));
+
+    await request(app.getHttpServer())
+      .get('/health')
+      .expect(503)
+      .expect((res) => {
+        expect(res.body).toMatchObject({
+          success: false,
+          statusCode: 503,
+          message: 'Health check failed',
+        });
+        expect(res.body.data).toBeUndefined();
       });
   });
 });

@@ -8,9 +8,13 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
-import { ErrorResponse } from '@/common/interfaces';
+import { ErrorResponse, ValidationError } from '@/common/interfaces';
 
 const CDP_PROBE_PATHS = new Set(['/json', '/json/list', '/json/version', '/json/protocol']);
+type HttpExceptionResponse = {
+  message?: string | ValidationError[];
+  error?: string;
+};
 
 function isCdpProbePath(url: string): boolean {
   const path = url.split('?')[0];
@@ -41,14 +45,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
         message = exceptionResponse;
         error = exception.name;
       } else if (typeof exceptionResponse === 'object') {
-        const res = exceptionResponse as any;
-        message = res.message || exception.message;
+        const res = exceptionResponse as HttpExceptionResponse;
         error = res.error || exception.name;
 
         // Handle validation errors from class-validator
         if (Array.isArray(res.message)) {
           validationErrors = res.message;
           message = 'Validation failed';
+        } else {
+          message = res.message || exception.message;
         }
       }
     } else if (exception instanceof Error) {

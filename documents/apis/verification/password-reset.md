@@ -589,7 +589,7 @@ The Team
 
 - **POST /auth/login**: Login với password mới sau reset
 - **POST /auth/register**: Tạo account mới (sets initial password)
-- **POST /users/change-password**: Change password when logged in (requires current password)
+- **PUT /users/password**: Change password when logged in (requires current password)
 - **GET /users/me**: Check user `hasPassword` flag để biết có thể reset không
 
 ---

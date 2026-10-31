@@ -70,7 +70,7 @@ services:
       retries: 5
       timeout: 5s
       interval: 10s
-      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      test: ['CMD-SHELL', 'pg_isready -U kwong2000 -d mimkat']
 
   redis:
     ports:
@@ -278,6 +278,10 @@ docker compose -f dev-compose.yml up -d
 ```
 
 Và cập nhật `DATABASE_URL` trong `.env`:
+
+```env
+DATABASE_URL="******localhost:5432/mimkat"
+```
 
 ## Troubleshooting
 

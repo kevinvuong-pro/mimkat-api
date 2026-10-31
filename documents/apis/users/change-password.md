@@ -381,7 +381,7 @@ curl -X PUT http://localhost:3000/users/password \
 ## Related Endpoints
 
 - **GET /users/me**: Get user profile (includes `hasPassword` flag)
-- **POST /auth/forgot-password**: Reset password via email (alternative to change password)
+- **POST /verification/forgot-password**: Reset password via email (alternative to change password)
 - **GET /users/sessions**: View active sessions
 - **DELETE /users/sessions**: Logout all devices (similar effect to password change)
 

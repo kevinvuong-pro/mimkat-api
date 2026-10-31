@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { ServiceUnavailableException } from '@nestjs/common';
 
 import { AppService } from '@/app.service';
 import { ConfigService } from '@nestjs/config';
@@ -40,8 +41,25 @@ describe('AppController', () => {
   });
 
   describe('health', () => {
-    it('should report an ok status', () => {
-      expect(appController.getHealth()).resolves.toMatchObject({ status: 'ok' });
+    it('should report an ok status', async () => {
+      await expect(appController.getHealth()).resolves.toEqual({
+        status: 'ok',
+        dependencies: {
+          database: true,
+          redis: true,
+          storage: true,
+        },
+      });
+    });
+
+    it('should report unavailable dependencies', async () => {
+      const storage = jest
+        .spyOn(appController['storage'], 'healthCheck')
+        .mockRejectedValue(new Error('storage unavailable'));
+
+      await expect(appController.getHealth()).rejects.toBeInstanceOf(ServiceUnavailableException);
+
+      storage.mockRestore();
     });
   });
 });

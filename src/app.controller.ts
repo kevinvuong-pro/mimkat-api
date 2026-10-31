@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
 import { ConfigService } from '@nestjs/config';
-import { Get, Controller, ServiceUnavailableException } from '@nestjs/common';
+import { Get, Controller, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 
 import { AppService } from '@/app.service';
 import { Public } from '@/common/decorators';
@@ -8,7 +8,10 @@ import { PrismaService } from '@/prisma/prisma.service';
 import { StorageService } from '@/storage/storage.service';
 
 @Controller()
-export class AppController {
+export class AppController implements OnModuleDestroy {
+  private redis?: Redis;
+  private redisConnection?: Promise<void>;
+
   constructor(
     private readonly appService: AppService,
     private readonly prisma: PrismaService,
@@ -24,7 +27,10 @@ export class AppController {
 
   @Public()
   @Get('health')
-  async getHealth() {
+  async getHealth(): Promise<{
+    status: 'ok';
+    dependencies: { redis: boolean; storage: boolean; database: boolean };
+  }> {
     const checks = await Promise.allSettled([
       this.prisma.$queryRaw`SELECT 1`,
       this.storage.healthCheck(),
@@ -47,17 +53,32 @@ export class AppController {
   }
 
   private async checkRedis(): Promise<void> {
-    const redis = new Redis(this.config.getOrThrow<string>('REDIS_URL'), {
-      lazyConnect: true,
-      connectTimeout: 2000,
-      maxRetriesPerRequest: 1,
-    });
-
-    try {
-      await redis.connect();
-      await redis.ping();
-    } finally {
-      await redis.quit();
+    if (!this.redis || this.redis.status === 'end') {
+      this.redis = new Redis(this.config.getOrThrow<string>('REDIS_URL'), {
+        lazyConnect: true,
+        connectTimeout: 2000,
+        maxRetriesPerRequest: 1,
+      });
+      this.redisConnection = undefined;
     }
+
+    if (this.redis.status === 'wait') {
+      this.redisConnection ??= this.redis.connect();
+
+      try {
+        await this.redisConnection;
+      } catch (error) {
+        this.redisConnection = undefined;
+        this.redis.disconnect();
+        throw error;
+      }
+    }
+
+    await this.redis.ping();
+  }
+
+  onModuleDestroy(): void {
+    this.redisConnection = undefined;
+    this.redis?.disconnect();
   }
 }

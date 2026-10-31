@@ -65,7 +65,7 @@ Backend API for Mimkat application built with NestJS, PostgreSQL, and Prisma ORM
 ### 1. Clone repository
 
 ```bash
-git clone https://github.com/kevinvuong-mim/mimkat-api.git
+git clone https://github.com/kevinvuong-pro/mimkat-api.git
 cd mimkat-api
 ```
 
@@ -93,12 +93,15 @@ Start PostgreSQL database with Docker Compose:
 docker compose -f dev-compose.yml up -d
 ```
 
-This will start:
+For local development, this starts:
 
 - Password: `1234abcd`
 - Username: `kwong2000`
 - Database name: `mimkat`
 - PostgreSQL on port `5432`
+
+These credentials come from `dev-compose.yml` and are only for local
+development. Do not reuse them in a deployed environment.
 
 ### 5. Run migrations
 
