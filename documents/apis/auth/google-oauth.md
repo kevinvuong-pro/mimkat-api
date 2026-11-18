@@ -14,7 +14,7 @@ API xác thực người dùng thông qua Google OAuth 2.0. Cho phép người d
 - Hỗ trợ link Google account vào tài khoản email/password hiện có
 - Session management với device tracking
 - Frontend lưu token trong localStorage và gửi Bearer token
-- Maximum 10 concurrent sessions per user
+- Maximum 12 concurrent sessions per user (`AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS`)
 - Session tối đa 30 ngày kể từ lúc tạo
 
 ---
@@ -269,7 +269,7 @@ Backend sẽ:
   - Device type (Desktop/Mobile/Tablet)
   - IP address
   - Full User-Agent string
-- **Session Limit**: Maximum 10 concurrent sessions per user
+- **Session Limit**: Maximum 12 concurrent sessions per user (`AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS`)
 - **Cleanup**: Session cũ nhất (theo `lastUsedAt`) bị xóa khi vượt limit
 - **Token Expiry**:
   - Access token: 1 hour

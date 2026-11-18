@@ -18,7 +18,7 @@ API xác thực người dùng sử dụng Bearer tokens.
 - Session management với device tracking
 - Rate limiting
 - Token rotation khi refresh
-- Maximum 10 concurrent sessions per user
+- Maximum 12 concurrent sessions per user
 - Session bị giới hạn tuyệt đối trong 30 ngày kể từ lúc tạo
 
 ---
@@ -305,7 +305,7 @@ curl -X POST http://localhost:3000/auth/login \
 - **Authentication**: Gửi `Authorization: Bearer {accessToken}` cho các endpoint cần đăng nhập.
 - **Refresh**: Gửi `refreshToken` trong request body tới `POST /auth/refresh`.
 - Hệ thống tự động thu thập thông tin thiết bị từ request headers
-- Mỗi người dùng có giới hạn **10 phiên đăng nhập đồng thời** (MAX_CONCURRENT_SESSIONS)
+- Mỗi người dùng có giới hạn **12 phiên đăng nhập đồng thời** (MAX_CONCURRENT_SESSIONS)
 - Khi vượt quá giới hạn, phiên cũ nhất (theo lastUsedAt) sẽ tự động bị đăng xuất
 - AccessToken: 1 giờ, RefreshToken: 7 ngày (sliding window), Session tối đa: 30 ngày
 - Password được verify bằng bcrypt.compare()
@@ -642,7 +642,7 @@ curl -X POST http://localhost:3000/auth/refresh \
 
 ### Session Management
 
-- **Số phiên đăng nhập đồng thời tối đa**: 10 sessions (AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS)
+- **Số phiên đăng nhập đồng thời tối đa**: 12 sessions (AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS)
 - **Khi vượt quá giới hạn**: Tự động đăng xuất phiên cũ nhất (dựa theo `lastUsedAt` field)
 - **Thông tin lưu trữ trong Session table**:
   - `refreshToken`: JWT refresh token được hash bằng bcrypt (salt rounds = 10) trước khi lưu vào database

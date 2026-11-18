@@ -74,26 +74,26 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-| Field                     | Type    | Description                            |
-| ------------------------- | ------- | -------------------------------------- |
-| items                     | array   | Danh sách các phiên đăng nhập          |
-| items[].id                | string  | Session ID (để dùng cho logout device) |
-| items[].deviceName        | string  | Tên thiết bị (browser + OS)            |
-| items[].deviceType        | string  | Loại thiết bị: Desktop, Mobile, Tablet |
-| items[].ipAddress         | string  | Địa chỉ IP của thiết bị                |
+| Field                     | Type    | Description                                       |
+| ------------------------- | ------- | ------------------------------------------------- |
+| items                     | array   | Danh sách các phiên đăng nhập                     |
+| items[].id                | string  | Session ID (để dùng cho logout device)            |
+| items[].deviceName        | string  | Tên thiết bị (browser + OS)                       |
+| items[].deviceType        | string  | Loại thiết bị: Desktop, Mobile, Tablet            |
+| items[].ipAddress         | string  | Địa chỉ IP của thiết bị                           |
 | items[].location          | string  | Vị trí gần đúng từ IP (thành phố, vùng, quốc gia) |
-| items[].createdAt         | string  | Thời điểm tạo session (ISO 8601)       |
-| items[].lastUsedAt        | string  | Lần cuối sử dụng (ISO 8601)            |
-| items[].expiresAt         | string  | Thời điểm hết hạn (ISO 8601)           |
-| items[].absoluteExpiresAt | string  | Hạn cứng của session (tối đa 30 ngày)  |
-| items[].isCurrent         | boolean | true nếu là thiết bị hiện tại          |
-| meta                      | object  | Thông tin phân trang                   |
-| meta.total                | number  | Tổng số sessions                       |
-| meta.page                 | number  | Trang hiện tại                         |
-| meta.perPage              | number  | Số lượng sessions mỗi trang            |
-| meta.totalPages           | number  | Tổng số trang                          |
-| meta.hasNextPage          | boolean | Có trang tiếp theo hay không           |
-| meta.hasPreviousPage      | boolean | Có trang trước hay không               |
+| items[].createdAt         | string  | Thời điểm tạo session (ISO 8601)                  |
+| items[].lastUsedAt        | string  | Lần cuối sử dụng (ISO 8601)                       |
+| items[].expiresAt         | string  | Thời điểm hết hạn (ISO 8601)                      |
+| items[].absoluteExpiresAt | string  | Hạn cứng của session (tối đa 30 ngày)             |
+| items[].isCurrent         | boolean | true nếu là thiết bị hiện tại                     |
+| meta                      | object  | Thông tin phân trang                              |
+| meta.total                | number  | Tổng số sessions                                  |
+| meta.page                 | number  | Trang hiện tại                                    |
+| meta.perPage              | number  | Số lượng sessions mỗi trang                       |
+| meta.totalPages           | number  | Tổng số trang                                     |
+| meta.hasNextPage          | boolean | Có trang tiếp theo hay không                      |
+| meta.hasPreviousPage      | boolean | Có trang trước hay không                          |
 
 **Error Responses**
 
@@ -412,7 +412,7 @@ Sessions được tạo tự động khi:
 
 ### Session Limit
 
-- **Max concurrent sessions**: 10 (cấu hình trong `AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS`)
+- **Max concurrent sessions**: 12 (cấu hình trong `AUTH_CONSTANTS.MAX_CONCURRENT_SESSIONS`)
 - **Enforcement**: Khi đạt limit, session cũ nhất (oldest `lastUsedAt`) bị xóa tự động
 - **Example**: Nếu limit = 10, login lần thứ 11 sẽ xóa session cũ nhất
 - **Automatic cleanup**: Xảy ra trong `auth.service.ts` method `enforceSessionLimit()`

@@ -1,6 +1,6 @@
 export const AUTH_CONSTANTS = {
   // Maximum number of concurrent sessions allowed per user
-  MAX_CONCURRENT_SESSIONS: 10,
+  MAX_CONCURRENT_SESSIONS: 12,
 
   // Token expiration times in milliseconds
   ACCESS_TOKEN_EXPIRATION: 60 * 60 * 1000, // 1 hour
