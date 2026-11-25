@@ -62,7 +62,6 @@ export class AuthService {
         refreshToken: '', // Will be updated after token generation
         absoluteExpiresAt,
         lastUsedAt: new Date(),
-        location: deviceInfo?.location,
         ipAddress: deviceInfo?.ipAddress,
         userAgent: deviceInfo?.userAgent,
         deviceName: deviceInfo?.deviceName,
@@ -311,7 +310,6 @@ export class AuthService {
           userAgent: deviceInfo.userAgent,
           deviceName: deviceInfo.deviceName,
           deviceType: deviceInfo.deviceType,
-          location: deviceInfo.location ?? null,
         }),
       },
     });

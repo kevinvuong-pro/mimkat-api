@@ -1,4 +1,5 @@
 import {
+  Logger,
   Injectable,
   ConflictException,
   NotFoundException,
@@ -18,6 +19,7 @@ import { ImageProcessingService } from '@/image-processing/image-processing.serv
 export class UsersService {
   private readonly awsEndpoint: string;
   private readonly awsBucketName: string;
+  private readonly logger = new Logger(UsersService.name);
 
   constructor(
     private prisma: PrismaService,
@@ -204,10 +206,12 @@ export class UsersService {
 
     const sessionDtos = sessions.map((session) => ({
       id: session.id,
+      latitude: session.latitude,
+      location: session.location,
       createdAt: session.createdAt,
       expiresAt: session.expiresAt,
+      longitude: session.longitude,
       lastUsedAt: session.lastUsedAt,
-      location: session.location || 'Unknown',
       ipAddress: session.ipAddress || 'Unknown',
       deviceName: session.deviceName || 'Unknown',
       deviceType: session.deviceType || 'Unknown',
@@ -216,6 +220,94 @@ export class UsersService {
     }));
 
     return createPaginatedData(sessionDtos, total, page, limit);
+  }
+
+  async updateCurrentSessionLocation(
+    userId: string,
+    sessionId: string,
+    latitude: number,
+    longitude: number,
+  ) {
+    const session = await this.prisma.session.findFirst({
+      where: { id: sessionId, userId },
+      select: { id: true },
+    });
+
+    if (!session) throw new NotFoundException('Session not found');
+
+    const location = await this.reverseGeocode(latitude, longitude);
+    const result = await this.prisma.session.updateMany({
+      where: { id: sessionId, userId },
+      data: {
+        latitude,
+        location,
+        longitude,
+      },
+    });
+    if (result.count === 0) throw new NotFoundException('Session not found');
+  }
+
+  private async reverseGeocode(latitude: number, longitude: number): Promise<string | null> {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5_000);
+    const params = new URLSearchParams({
+      format: 'jsonv2',
+      lat: String(latitude),
+      lon: String(longitude),
+      zoom: '10',
+      addressdetails: '1',
+    });
+
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?${params.toString()}`,
+        {
+          signal: controller.signal,
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'Mimkat/0.0.1',
+          },
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Reverse geocoding failed with status ${response.status}`);
+      }
+
+      const data: unknown = await response.json();
+      if (!data || typeof data !== 'object') {
+        throw new Error('Reverse geocoding returned an invalid response');
+      }
+
+      const address =
+        'address' in data && data.address && typeof data.address === 'object'
+          ? (data.address as Record<string, unknown>)
+          : undefined;
+      const locality = [
+        address?.city,
+        address?.town,
+        address?.village,
+        address?.municipality,
+        address?.county,
+        address?.state,
+      ].find((value): value is string => typeof value === 'string' && value.length > 0);
+      const country = typeof address?.country === 'string' ? address.country : undefined;
+      const location = [locality, country].filter(Boolean).join(', ');
+
+      if (location) return location;
+
+      const displayName = 'display_name' in data ? data.display_name : undefined;
+      return typeof displayName === 'string' && displayName.length > 0 ? displayName : null;
+    } catch (error) {
+      this.logger.warn(
+        `Unable to reverse-geocode session coordinates: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+      return null;
+    } finally {
+      clearTimeout(timeout);
+    }
   }
 
   async logoutAllDevices(userId: string) {

@@ -1,10 +1,8 @@
 import { Request } from 'express';
-import { Logger } from '@nestjs/common';
 import { UAParser } from 'ua-parser-js';
 
 export interface DeviceInfo {
   ipAddress: string;
-  location?: string;
   userAgent: string;
   deviceName: string;
   deviceType: string;
@@ -17,19 +15,14 @@ interface DeviceRequestHeaders {
 }
 
 export class DeviceUtil {
-  private static readonly logger = new Logger(DeviceUtil.name);
-
-  static async extractDeviceInfo(req: Request): Promise<DeviceInfo> {
+  static extractDeviceInfo(req: Request): DeviceInfo {
     const ipAddress = this.getIpAddress(req);
     const userAgent = req.headers['user-agent'] || 'Unknown';
 
     const deviceType = this.getDeviceType(userAgent);
     const clientHints = req.headers as DeviceRequestHeaders;
     const deviceName = clientHints['x-device-model']?.trim() || this.getDeviceName(userAgent);
-    const location = await this.getLocation(ipAddress);
-
     return {
-      location,
       ipAddress,
       userAgent,
       deviceName,
@@ -47,55 +40,6 @@ export class DeviceUtil {
     }
 
     return (req.headers['x-real-ip'] as string) || req.socket.remoteAddress || 'Unknown';
-  }
-
-  private static async getLocation(ipAddress: string): Promise<string | undefined> {
-    if (
-      !ipAddress ||
-      ipAddress === '::1' ||
-      ipAddress === 'Unknown' ||
-      ipAddress === '127.0.0.1' ||
-      ipAddress.startsWith('10.') ||
-      ipAddress.startsWith('172.16.') ||
-      ipAddress.startsWith('192.168.')
-    ) {
-      return undefined;
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000);
-
-    try {
-      const response = await fetch(
-        `https://free.freeipapi.com/api/v1/json/${encodeURIComponent(ipAddress)}`,
-        {
-          signal: controller.signal,
-          headers: { Accept: 'application/json' },
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Geolocation request failed with status ${response.status}`);
-      }
-
-      const data = (await response.json()) as {
-        regionName?: string;
-        countryName?: string;
-      };
-
-      const location = [data.regionName, data.countryName].filter(Boolean).join(', ');
-
-      return location || undefined;
-    } catch (error) {
-      this.logger.warn(
-        `Unable to resolve location for IP ${ipAddress}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
-      return undefined;
-    } finally {
-      clearTimeout(timeout);
-    }
   }
 
   private static getDeviceType(userAgent: string): string {

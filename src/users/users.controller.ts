@@ -24,6 +24,7 @@ import { UpdateProfileDto } from '@/users/dto/update-profile.dto';
 import { ChangePasswordDto } from '@/users/dto/change-password.dto';
 import { CurrentUser, type UserPayload } from '@/common/decorators';
 import { getPaginationParams } from '@/common/utils/pagination.util';
+import { UpdateSessionLocationDto } from '@/users/dto/update-session-location.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -109,6 +110,20 @@ export class UsersController {
       normalizedPage,
       normalizedLimit,
       skip,
+    );
+  }
+
+  @Put('sessions/current/location')
+  @HttpCode(HttpStatus.OK)
+  updateCurrentSessionLocation(
+    @CurrentUser() user: UserPayload,
+    @Body() updateSessionLocationDto: UpdateSessionLocationDto,
+  ) {
+    return this.usersService.updateCurrentSessionLocation(
+      user.id,
+      user.sessionId,
+      updateSessionLocationDto.latitude,
+      updateSessionLocationDto.longitude,
     );
   }
 

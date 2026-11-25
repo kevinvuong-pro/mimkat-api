@@ -64,6 +64,8 @@ model Session {
   location   String?
   ipAddress  String?
   userAgent  String?
+  latitude   Float?
+  longitude  Float?
 
   // Timestamps
   createdAt DateTime @default(now())

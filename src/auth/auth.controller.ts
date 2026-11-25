@@ -41,7 +41,7 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 900000 } }) // 10 requests per 15 minutes
   async login(@Req() req: Request, @Body() loginDto: LoginDto) {
-    const deviceInfo = await DeviceUtil.extractDeviceInfo(req);
+    const deviceInfo = DeviceUtil.extractDeviceInfo(req);
 
     return this.authService.login(loginDto, deviceInfo);
   }
@@ -59,7 +59,7 @@ export class AuthController {
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
   async refreshTokens(@Req() req: Request, @Body() refreshTokenDto: RefreshTokenDto) {
-    const deviceInfo = await DeviceUtil.extractDeviceInfo(req);
+    const deviceInfo = DeviceUtil.extractDeviceInfo(req);
 
     return this.authService.refreshTokens(refreshTokenDto.refreshToken, deviceInfo);
   }
@@ -78,7 +78,7 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
     // After Google authentication, this callback is triggered
-    const deviceInfo = await DeviceUtil.extractDeviceInfo(req);
+    const deviceInfo = DeviceUtil.extractDeviceInfo(req);
 
     const result = await this.authService.googleLogin(req.user as any, deviceInfo);
 

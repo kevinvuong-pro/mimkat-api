@@ -45,6 +45,9 @@ Authorization: Bearer {accessToken}
       "deviceName": "Chrome on macOS",
       "deviceType": "Desktop",
       "ipAddress": "192.168.1.100",
+      "location": "Da Nang, Vietnam",
+      "latitude": 16.0544,
+      "longitude": 108.2022,
       "createdAt": "2025-11-07T08:00:00.000Z",
       "lastUsedAt": "2025-11-07T10:30:00.000Z",
       "expiresAt": "2025-11-14T08:00:00.000Z",
@@ -56,6 +59,9 @@ Authorization: Bearer {accessToken}
       "deviceName": "Safari on iPhone",
       "deviceType": "Mobile",
       "ipAddress": "192.168.1.101",
+      "location": null,
+      "latitude": null,
+      "longitude": null,
       "createdAt": "2025-11-06T15:20:00.000Z",
       "lastUsedAt": "2025-11-06T18:45:00.000Z",
       "expiresAt": "2025-11-13T15:20:00.000Z",
@@ -74,26 +80,28 @@ Authorization: Bearer {accessToken}
 }
 ```
 
-| Field                     | Type    | Description                                       |
-| ------------------------- | ------- | ------------------------------------------------- |
-| items                     | array   | Danh sách các phiên đăng nhập                     |
-| items[].id                | string  | Session ID (để dùng cho logout device)            |
-| items[].deviceName        | string  | Tên thiết bị (browser + OS)                       |
-| items[].deviceType        | string  | Loại thiết bị: Desktop, Mobile, Tablet            |
-| items[].ipAddress         | string  | Địa chỉ IP của thiết bị                           |
-| items[].location          | string  | Vị trí gần đúng từ IP (thành phố, vùng, quốc gia) |
-| items[].createdAt         | string  | Thời điểm tạo session (ISO 8601)                  |
-| items[].lastUsedAt        | string  | Lần cuối sử dụng (ISO 8601)                       |
-| items[].expiresAt         | string  | Thời điểm hết hạn (ISO 8601)                      |
-| items[].absoluteExpiresAt | string  | Hạn cứng của session (tối đa 30 ngày)             |
-| items[].isCurrent         | boolean | true nếu là thiết bị hiện tại                     |
-| meta                      | object  | Thông tin phân trang                              |
-| meta.total                | number  | Tổng số sessions                                  |
-| meta.page                 | number  | Trang hiện tại                                    |
-| meta.perPage              | number  | Số lượng sessions mỗi trang                       |
-| meta.totalPages           | number  | Tổng số trang                                     |
-| meta.hasNextPage          | boolean | Có trang tiếp theo hay không                      |
-| meta.hasPreviousPage      | boolean | Có trang trước hay không                          |
+| Field                     | Type           | Description                                               |
+| ------------------------- | -------------- | --------------------------------------------------------- |
+| items                     | array          | Danh sách các phiên đăng nhập                             |
+| items[].id                | string         | Session ID (để dùng cho logout device)                    |
+| items[].deviceName        | string         | Tên thiết bị (browser + OS)                               |
+| items[].deviceType        | string         | Loại thiết bị: Desktop, Mobile, Tablet                    |
+| items[].ipAddress         | string         | Địa chỉ IP của thiết bị                                   |
+| items[].location          | string \| null | Địa điểm (khu vực và quốc gia) reverse-geocoded từ tọa độ |
+| items[].latitude          | number \| null | Vĩ độ nếu user đã cho phép chia sẻ vị trí                 |
+| items[].longitude         | number \| null | Kinh độ nếu user đã cho phép chia sẻ vị trí               |
+| items[].createdAt         | string         | Thời điểm tạo session (ISO 8601)                          |
+| items[].lastUsedAt        | string         | Lần cuối sử dụng (ISO 8601)                               |
+| items[].expiresAt         | string         | Thời điểm hết hạn (ISO 8601)                              |
+| items[].absoluteExpiresAt | string         | Hạn cứng của session (tối đa 30 ngày)                     |
+| items[].isCurrent         | boolean        | true nếu là thiết bị hiện tại                             |
+| meta                      | object         | Thông tin phân trang                                      |
+| meta.total                | number         | Tổng số sessions                                          |
+| meta.page                 | number         | Trang hiện tại                                            |
+| meta.perPage              | number         | Số lượng sessions mỗi trang                               |
+| meta.totalPages           | number         | Tổng số trang                                             |
+| meta.hasNextPage          | boolean        | Có trang tiếp theo hay không                              |
+| meta.hasPreviousPage      | boolean        | Có trang trước hay không                                  |
 
 **Error Responses**
 
@@ -183,6 +191,8 @@ curl -X GET "http://localhost:3000/users/sessions?page=1&limit=20" \
   - `deviceName`: "Unknown"
   - `deviceType`: "Unknown"
   - `ipAddress`: "Unknown"
+- Nếu session chưa từng lưu tọa độ (ví dụ user không cho phép vị trí hoặc thiết bị không lấy được tọa độ), `latitude` và `longitude` là `null`; client hiển thị vị trí là "Unknown". Việc từ chối lấy vị trí ở lần sau không xóa tọa độ đã lưu trước đó.
+- `location` là `null` nếu chưa có tọa độ hoặc dịch vụ reverse-geocoding không trả về địa điểm.
 - Response luôn bao gồm array `items` (có thể empty nếu không có session nào)
 
 ---
@@ -382,6 +392,36 @@ curl -X DELETE http://localhost:3000/users/sessions/clx1234567890abcdefghij \
   - Muốn đăng xuất khỏi thiết bị cũ không còn sử dụng
   - Remote logout từ thiết bị khác
   - Quên đăng xuất ở máy public/shared
+
+---
+
+### Save Current Session Coordinates (Lưu tọa độ phiên hiện tại)
+
+Client gọi endpoint này sau khi trình duyệt lấy được vị trí. Nếu user từ chối, trình duyệt không hỗ trợ Geolocation, hoặc không lấy được tọa độ, client không gọi endpoint; tọa độ đã lưu trước đó (nếu có) không bị thay đổi.
+
+**Endpoint**: `PUT /users/sessions/current/location`
+
+**Authentication**: Required (`Authorization: Bearer <accessToken>`)
+
+#### Request Body
+
+```json
+{
+  "latitude": 16.0544,
+  "longitude": 108.2022
+}
+```
+
+`latitude` phải nằm trong khoảng `-90..90`; `longitude` phải nằm trong khoảng `-180..180`.
+
+#### Behavior
+
+- Tọa độ chỉ được lưu cho session hiện tại từ access token; client không thể chỉ định session khác.
+- Request bị từ chối với `400 Bad Request` nếu latitude/longitude không phải số hữu hạn hoặc nằm ngoài phạm vi hợp lệ; trả `404 Not Found` nếu session hiện tại không tồn tại hoặc không thuộc user.
+- API gửi tọa độ đến OpenStreetMap Nominatim để reverse-geocode và lưu khu vực/quốc gia dạng text cùng tọa độ. Nếu dịch vụ không khả dụng hoặc không tìm được địa điểm, API vẫn lưu tọa độ và để `location` là `null`.
+- Migration xóa `location` dạng text cũ (vị trí ước lượng theo IP), sau đó thêm lại trường này với ý nghĩa địa điểm reverse-geocoded; dữ liệu cũ không được chuyển đổi.
+- Danh sách sessions trả `location` nullable. Client hiển thị "Unknown" nếu thiếu địa điểm, hoặc cho phép mở OpenStreetMap nếu có tọa độ.
+- Refresh token chỉ cập nhật IP và thông tin thiết bị; không ảnh hưởng tọa độ đã lưu.
 
 ---
 
