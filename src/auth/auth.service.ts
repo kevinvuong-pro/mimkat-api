@@ -308,10 +308,10 @@ export class AuthService {
         // Update device info if provided
         ...(deviceInfo && {
           ipAddress: deviceInfo.ipAddress,
-          location: deviceInfo.location,
           userAgent: deviceInfo.userAgent,
           deviceName: deviceInfo.deviceName,
           deviceType: deviceInfo.deviceType,
+          location: deviceInfo.location ?? null,
         }),
       },
     });
