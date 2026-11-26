@@ -331,6 +331,8 @@ export class AuthService {
       where: { OR: [{ googleId: googleUser.googleId }, { email: googleUser.email }] },
     });
 
+    const googleFullName = `${googleUser.firstName || ''} ${googleUser.lastName || ''}`.trim();
+
     // If user exists by email but doesn't have Google linked yet
     if (user && !user.googleId) {
       // Link Google account to existing user
@@ -340,7 +342,7 @@ export class AuthService {
           isEmailVerified: true, // Google login implies email is verified
           googleId: googleUser.googleId,
           avatar: user.avatar || googleUser.avatar,
-          fullName: user.fullName || `${googleUser.firstName || ''} ${googleUser.lastName || ''}`,
+          fullName: user.fullName || googleFullName,
         },
       });
     }
@@ -352,9 +354,9 @@ export class AuthService {
           password: null,
           isEmailVerified: true, // Google accounts are pre-verified
           email: googleUser.email,
+          fullName: googleFullName,
           avatar: googleUser.avatar,
           googleId: googleUser.googleId,
-          fullName: `${googleUser.firstName} ${googleUser.lastName}`,
         },
       });
     }
